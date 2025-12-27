@@ -3,62 +3,71 @@ using UnityEngine.InputSystem;
 
 public class PlayerControls : MonoBehaviour
 {
+    [Header("Input")]
     public InputActionReference moveActionRef;
-    public InputActionReference cameraActionRef;
 
+    [Header("References")]
     [SerializeField] private Transform cameraTransform;
-    [SerializeField] private float speed = 10f;
-    [SerializeField] private float mouseSensitivity = 100f;
-    [SerializeField] private float minViewDistance = -80f;
-    [SerializeField] private float maxViewDistance = 80f;
-    [SerializeField] private bool invertY = false;
 
-    
+    [Header("Movement")]
+    [SerializeField] private float speed = 50f;
+    [SerializeField] private float smoothTime = 0.1f;
 
-
-    private float xRotation = 0f;
+    private Vector3 currentVelocity;
 
     private void OnEnable()
     {
         moveActionRef.action.Enable();
-        cameraActionRef.action.Enable();
     }
 
     private void OnDisable()
     {
         moveActionRef.action.Disable();
-        cameraActionRef.action.Disable();
     }
 
     void Update()
     {
         HandleMovement();
-        HandleCameraRotation();
     }
 
     void HandleMovement()
     {
         Vector2 input = moveActionRef.action.ReadValue<Vector2>();
+        if (input.sqrMagnitude < 0.01f) return;
 
-        // Déplacement relatif à l’orientation du joueur
-        Vector3 move =
-            transform.right * input.x +
-            transform.forward * input.y;
+        // Camera directions (flattened on Y)
+        Vector3 camForward = cameraTransform.forward;
+        Vector3 camRight = cameraTransform.right;
 
-        transform.position += move * speed * Time.deltaTime;
-    }
+        camForward.y = 0f;
+        camRight.y = 0f;
 
-    void HandleCameraRotation()
-    {
-        Vector2 mouseInput = cameraActionRef.action.ReadValue<Vector2>() * mouseSensitivity * Time.deltaTime;
+        camForward.Normalize();
+        camRight.Normalize();
 
-        // Rotation verticale (pitch)
-        xRotation += (invertY ? mouseInput.y : -mouseInput.y);
-        xRotation = Mathf.Clamp(xRotation, minViewDistance, maxViewDistance);
+        // Camera-relative movement
+        Vector3 targetDirection = camRight * input.x + camForward * input.y;
 
-        cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        Vector3 targetVelocity = targetDirection * speed;
 
-        // Rotation horizontale (yaw) -> joueur
-        transform.Rotate(Vector3.up * mouseInput.x);
+        // Smooth movement
+        Vector3 smoothMove = Vector3.SmoothDamp(
+            Vector3.zero,
+            targetVelocity,
+            ref currentVelocity,
+            smoothTime
+        );
+
+        transform.position += smoothMove * Time.deltaTime;
+
+        if (targetDirection != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                10f * Time.deltaTime
+            );
+        }
     }
 }

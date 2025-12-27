@@ -14,11 +14,12 @@ public class LevelGenerator : MonoBehaviour
     public GameObject doorPrefab;
     public GameObject pc_etuPrefab;
     public GameObject pc_profPrefab;
+    
 
     [Header("Room Size")]
     public int rows = 5;
     public int columns = 6;
-    public float spacing = 2.5f;
+    public float spacing = 1.5f;
 
     //taille de la salle en nombre de préfab de murs
     private int length = 3;
@@ -29,11 +30,13 @@ public class LevelGenerator : MonoBehaviour
 
     private List<GameObject> spawnedObjects = new List<GameObject>();
 
-    private Vector2Int playerStartPos;
-    private Vector2Int copyTargetPos;
+    private Vector3 playerStartPos;
+    private Vector3 copyTargetPos;
 
     private Vector3 walllength;
     private Vector3 pillarlength;
+
+    public GameObject Player;
 
     private void Start()
     {
@@ -67,6 +70,9 @@ public class LevelGenerator : MonoBehaviour
             navMeshSurface.BuildNavMesh();
             Debug.Log("NavMesh généré avec succès!");
         }
+
+        Player.transform.position = playerStartPos;
+        Player.transform.rotation = Quaternion.identity;
     }
 
     void ClearLevel()
@@ -82,12 +88,12 @@ public class LevelGenerator : MonoBehaviour
     void DefineKeyPositions()
     {
         // Position du joueur
-        playerStartPos = new Vector2Int(Random.Range(1, rows - 1), Random.Range(1, columns - 1));
+        playerStartPos = new Vector3(Random.Range(1, rows - 1), Player.transform.GetComponent<Renderer>().bounds.max.y ,Random.Range(1, columns - 1));
         
         // Table de la copie à copier
         do
         {
-            copyTargetPos = new Vector2Int(Random.Range(1, rows - 1), Random.Range(1, columns - 1));
+            copyTargetPos = new Vector3(Random.Range(1, rows - 1), 0 , Random.Range(1, columns - 1));
         } while (copyTargetPos == playerStartPos);
     }
 
@@ -209,32 +215,58 @@ public class LevelGenerator : MonoBehaviour
         float xPos = segmentLength;
         float zPos = segmentLength / 2;
 
-        Vector3 teacherPos = new Vector3(xPos, pc_profPrefab.transform.localScale.y / 2, zPos);
+        Vector3 teacherPos = new Vector3(xPos, 0, zPos);
         GameObject teacherDesk = Instantiate(pc_profPrefab, teacherPos, Quaternion.identity, PropsParent);
         spawnedObjects.Add(teacherDesk);
     }
 
     private void GenerateStudentDesks()
     {
-        float segmentLength = walllength.z;
-        float pillarSize = pillarlength.z;
+        Renderer[] renderers = pc_etuPrefab.GetComponentsInChildren<Renderer>();
+
+        Bounds deskBounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++)
+        {
+            deskBounds.Encapsulate(renderers[i].bounds);
+        }
+
+        float deskWidth = deskBounds.size.x;
+        float deskHeight = deskBounds.size.y;
+
+
+
+        float roomWidth = walllength.z * width + pillarlength.z * (width - 1);
         float spacingOffset = spacing;
 
-        // Fill the room with student desks, leaving first row for teacher
-        for (int row = 0; row < rows; row++) // skip last row for teacher
+        float gridWidth = columns * deskWidth + (columns - 1) * spacingOffset;
+
+        
+        float startX = (roomWidth - gridWidth) / 2f + deskWidth / 2f;
+
+        for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < columns; col++)
             {
-                // Calculate X position
-                float xPos = col * spacingOffset + segmentLength / 2;
+                float xPos = startX + col * (deskWidth + spacingOffset);
+                float zPos = row * spacingOffset + walllength.z;
 
-                // Calculate Z position (rows start from back of the room)
-                float zPos = row * segmentLength + spacingOffset + segmentLength / 2;
+                Vector3 position = new Vector3(
+                    xPos,
+                    0,
+                    zPos
+                );
 
-                GameObject studentDesk = Instantiate(pc_etuPrefab, new Vector3(xPos, pc_etuPrefab.transform.localScale.y / 2, zPos), Quaternion.identity, PropsParent);
+                GameObject studentDesk = Instantiate(
+                    pc_etuPrefab,
+                    position,
+                    Quaternion.identity,
+                    PropsParent
+                );
+
                 spawnedObjects.Add(studentDesk);
             }
         }
     }
+
 
 }
