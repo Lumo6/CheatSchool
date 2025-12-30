@@ -1,73 +1,147 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 public class PlayerControls : MonoBehaviour
 {
-    [Header("Input")]
-    public InputActionReference moveActionRef;
+    [Header("Input Actions")]
+    public InputActionReference MoveActionRef;
+    public InputActionReference NextCameraActionRef;
+    public InputActionReference PrevCameraActionRef;
+    public InputActionReference CrouchActionRef;
+    public InputActionReference JumpActionRef;
+    public InputActionReference SprintActionRef;
 
-    [Header("References")]
-    [SerializeField] private Transform cameraTransform;
+    [Header("Cameras")]
+    public List<Camera> Cameras;
 
     [Header("Movement")]
-    [SerializeField] private float speed = 50f;
-    [SerializeField] private float smoothTime = 0.1f;
+    [SerializeField] private float speed = 10f;
+    [SerializeField] private float speedMultiplier = 1.0f;
 
-    private Vector3 currentVelocity;
+    private int currentCameraIndex = 0;
+    private bool isSprinting = false;
+    private bool isCrouching = false;
+
+    #region Enable / Disable
 
     private void OnEnable()
     {
-        moveActionRef.action.Enable();
+        MoveActionRef.action.Enable();
+        NextCameraActionRef.action.Enable();
+        PrevCameraActionRef.action.Enable();
+        CrouchActionRef.action.Enable();
+        JumpActionRef.action.Enable();
+        SprintActionRef.action.Enable();
+
+        NextCameraActionRef.action.performed += OnNextCamera;
+        PrevCameraActionRef.action.performed += OnPrevCamera;
+        JumpActionRef.action.performed += OnJump;
+        CrouchActionRef.action.performed += OnCrouch;
+        CrouchActionRef.action.canceled += OnUncrouch;
+        SprintActionRef.action.performed += OnSprint;
+        SprintActionRef.action.canceled += OnStopSprint;
     }
 
     private void OnDisable()
     {
-        moveActionRef.action.Disable();
+        NextCameraActionRef.action.performed -= OnNextCamera;
+        PrevCameraActionRef.action.performed -= OnPrevCamera;
+        JumpActionRef.action.performed -= OnJump;
+        CrouchActionRef.action.performed -= OnCrouch;
+        CrouchActionRef.action.canceled -= OnUncrouch;
+        SprintActionRef.action.performed -= OnSprint;
+        SprintActionRef.action.canceled -= OnStopSprint;
+
+        MoveActionRef.action.Disable();
+        NextCameraActionRef.action.Disable();
+        PrevCameraActionRef.action.Disable();
+        CrouchActionRef.action.Disable();
+        JumpActionRef.action.Disable();
+        SprintActionRef.action.Disable();
     }
 
-    void Update()
+    #endregion
+
+    private void Update()
     {
         HandleMovement();
     }
 
+    #region Movement
+
     void HandleMovement()
     {
-        Vector2 input = moveActionRef.action.ReadValue<Vector2>();
-        if (input.sqrMagnitude < 0.01f) return;
+        Vector2 input = MoveActionRef.action.ReadValue<Vector2>();
 
-        // Camera directions (flattened on Y)
-        Vector3 camForward = cameraTransform.forward;
-        Vector3 camRight = cameraTransform.right;
+        Vector3 move =
+            transform.right * input.x +
+            transform.forward * input.y;
 
-        camForward.y = 0f;
-        camRight.y = 0f;
+        float currentSpeed = isSprinting ? speed * speedMultiplier : speed;
+        transform.position += move * currentSpeed * Time.deltaTime;
+    }
 
-        camForward.Normalize();
-        camRight.Normalize();
+    #endregion
 
-        // Camera-relative movement
-        Vector3 targetDirection = camRight * input.x + camForward * input.y;
+    #region Input Functions
 
-        Vector3 targetVelocity = targetDirection * speed;
+    void OnNextCamera(InputAction.CallbackContext ctx)
+    {
+        currentCameraIndex = (currentCameraIndex + 1) % Cameras.Count;
+        SwitchCamera(currentCameraIndex);
+    }
 
-        // Smooth movement
-        Vector3 smoothMove = Vector3.SmoothDamp(
-            Vector3.zero,
-            targetVelocity,
-            ref currentVelocity,
-            smoothTime
-        );
+    void OnPrevCamera(InputAction.CallbackContext ctx)
+    {
+        currentCameraIndex--;
+        if (currentCameraIndex < 0)
+            currentCameraIndex = Cameras.Count - 1;
 
-        transform.position += smoothMove * Time.deltaTime;
+        SwitchCamera(currentCameraIndex);
+    }
 
-        if (targetDirection != Vector3.zero)
+    void OnJump(InputAction.CallbackContext ctx)
+    {
+        Debug.Log("Jump");
+        // Add jump logic (Rigidbody, CharacterController, etc.)
+    }
+
+    void OnCrouch(InputAction.CallbackContext ctx)
+    {
+        isCrouching = true;
+        speedMultiplier = 0.2f;
+        Debug.Log("Crouch");
+    }
+
+    void OnUncrouch(InputAction.CallbackContext ctx)
+    {
+        isCrouching = false;
+        speedMultiplier = 1f;
+        Debug.Log("Uncrouch");
+    }
+
+    void OnSprint(InputAction.CallbackContext ctx)
+    {
+        isSprinting = true;
+        speedMultiplier = 2f;
+        Debug.Log("Sprint");
+    }
+
+    void OnStopSprint(InputAction.CallbackContext ctx)
+    {
+        isSprinting = false;
+        speedMultiplier = 1f;
+        Debug.Log("Stop Sprint");
+    }
+
+    #endregion
+
+    void SwitchCamera(int index)
+    {
+        for (int i = 0; i < Cameras.Count; i++)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                targetRotation,
-                10f * Time.deltaTime
-            );
+            Cameras[i].gameObject.SetActive(i == index);
         }
     }
 }
