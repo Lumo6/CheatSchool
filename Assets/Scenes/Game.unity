@@ -153,20 +153,20 @@ MonoBehaviour:
   wallPrefab: {fileID: 1336309957540940, guid: 288b229db858c114299d1bf70ffc95cd, type: 3}
   wallDoorPrefab: {fileID: 1999326427868500, guid: 4af663313fdc5d04889a6710948329c3, type: 3}
   pillarPrefab: {fileID: 1926777631656740, guid: 935ba91ea5459eb4d8917d5e94bc3ddf, type: 3}
-  doorPrefab: {fileID: 1965528337302418, guid: c46afe706fb2cde4883f7afaeaa67a78, type: 3}
   pc_etuPrefab: {fileID: 6873392318561122437, guid: 195ee8ec795cdcf45b83ae9b3927c8e3, type: 3}
   pc_profPrefab: {fileID: 610144186908758709, guid: e391003b326509840a093a0c382856ac, type: 3}
-  rows: 4
-  columns: 6
+  windowWallPrefab: {fileID: 1471179749966258, guid: d8553808ed1fd2a41982e26a8f099b9a, type: 3}
+  doorPrefab: {fileID: 1999326427868500, guid: 4af663313fdc5d04889a6710948329c3, type: 3}
+  rows: 5
+  columns: 4
   rowSpacing: 1.5
   columnSpacing: 1.5
-  length: 5
+  length: 3
   width: 3
   navMeshSurface: {fileID: 0}
   copyTargetCount: 3
   Player: {fileID: 3494838454208244082, guid: 288f651d87a6fa44a80327422267e820, type: 3}
   cameraPrefab: {fileID: 7219118050305129, guid: 014053d2fa933f34fa8823e37fe76af4, type: 3}
-  cameraHeight: 5
   cameraOffset: 1
 --- !u!4 &398123287
 Transform:

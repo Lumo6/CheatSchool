@@ -11,9 +11,10 @@ public class LevelGenerator : MonoBehaviour
     public GameObject wallPrefab;
     public GameObject wallDoorPrefab;
     public GameObject pillarPrefab;
-    public GameObject doorPrefab;
     public GameObject pc_etuPrefab;
     public GameObject pc_profPrefab;
+    public GameObject windowWallPrefab;
+    public GameObject doorPrefab;
 
 
     [Header("Room Size")]
@@ -54,8 +55,16 @@ public class LevelGenerator : MonoBehaviour
 
     [Header("Camera")]
     public Camera cameraPrefab;
-    public float cameraHeight = 5f;
     public float cameraOffset = 1f;
+
+    [Header("World Grid")]
+    private Vector2Int gridPos; // (0..2, 0..2)
+
+    enum WallSide { North, South, East, West }
+    private HashSet<WallSide> outsideWalls = new HashSet<WallSide>();
+    private WallSide doorWall;
+
+
 
     private void Start()
     {
@@ -67,6 +76,9 @@ public class LevelGenerator : MonoBehaviour
     public void GenerateLevel()
     {
         ClearLevel();
+
+        // 0. Choisir une position dans la grille 3x3
+        PickGridPosition();
 
         // Définir les positions importantes
         DefineKeyPositions();
@@ -107,6 +119,17 @@ public class LevelGenerator : MonoBehaviour
         spawnedObjects.Clear();
     }
 
+    void PickGridPosition()
+    {
+        gridPos = new Vector2Int(
+            Random.Range(0, 3),
+            Random.Range(0, 3)
+        );
+
+        Debug.Log($"Room grid position: {gridPos}");
+    }
+
+
     void DefineKeyPositions()
     {
         copyTargetPositions.Clear();
@@ -144,110 +167,192 @@ public class LevelGenerator : MonoBehaviour
     {
         float segmentLength = walllength.z;
         float pillarSize = pillarlength.z;
+        int scale = Mathf.Max(width, length) + 1;
 
         Vector3 pos = new Vector3((segmentLength * width + pillarSize * (width + 1)) / 2, 0, (segmentLength * length + pillarSize * (length + 1)) / 2);
         GameObject floor = Instantiate(floorPrefab, pos, Quaternion.identity, PropsParent);
-        int scale = Mathf.Max(width, length) + 1;
         floor.transform.localScale = new Vector3(scale, 0, scale);
         spawnedObjects.Add(floor);
+
+        pos = new Vector3((segmentLength * width + pillarSize * (width + 1)) / 2, pillarlength.y, (segmentLength * length + pillarSize * (length + 1)) / 2);
+        GameObject roof = Instantiate(floorPrefab, pos, Quaternion.identity, PropsParent);
+        roof.transform.localScale = new Vector3(scale, 0, scale);
+        spawnedObjects.Add(roof);
     }
 
     void GenerateWallsWithPillars()
     {
-        // Calculate wall segment length and pillar positions
+        // Compute which walls are outside + where the door goes
+        ComputeWallLogic();
+
         float segmentLength = walllength.z;
         float pillarSize = pillarlength.z;
 
-        // Generate walls along each side of the room
-
-        // 1. NORTH WALL (top, along width)
+        // 1. NORTH WALL
         for (int i = 0; i <= width; i++)
         {
-            // Place pillar
             float xPos = i * (segmentLength + pillarSize);
             float zPos = length * (segmentLength + pillarSize);
-            Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
-            GameObject pillar = Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent);
-            spawnedObjects.Add(pillar);
 
-            // Place wall segment (except after last pillar)
+            // Pillars
+            Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
+            spawnedObjects.Add(Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent));
+
+            // Wall segments
             if (i < width)
             {
                 float wallXPos = xPos + pillarSize / 2 + segmentLength / 2;
                 Vector3 wallPos = new Vector3(wallXPos, walllength.y / 2, zPos);
-                GameObject wall = Instantiate(wallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+
+                GameObject wall;
+
+                if (outsideWalls.Contains(WallSide.North) && Random.value < 0.3f)
+                {
+                    wall = Instantiate(windowWallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                }
+                else if (doorWall == WallSide.North && i == width / 2)
+                {
+                    wall = Instantiate(doorPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                }
+                else
+                {
+                    wall = Instantiate(wallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                }
+
                 spawnedObjects.Add(wall);
             }
         }
 
-        // 2. SOUTH WALL (bottom, along width)
+        // 2. SOUTH WALL
         for (int i = 0; i <= width; i++)
         {
-            // Place pillar
             float xPos = i * (segmentLength + pillarSize);
             float zPos = 0;
-            Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
-            GameObject pillar = Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent);
-            spawnedObjects.Add(pillar);
 
-            // Place wall segment (except after last pillar)
+            Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
+            spawnedObjects.Add(Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent));
+
             if (i < width)
             {
                 float wallXPos = xPos + pillarSize / 2 + segmentLength / 2;
                 Vector3 wallPos = new Vector3(wallXPos, walllength.y / 2, zPos);
-                GameObject wall = Instantiate(wallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+
+                GameObject wall;
+
+                if (outsideWalls.Contains(WallSide.South) && Random.value < 0.3f)
+                {
+                    wall = Instantiate(windowWallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                }
+                else if (doorWall == WallSide.South && i == width / 2)
+                {
+                    wall = Instantiate(doorPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                }
+                else
+                {
+                    wall = Instantiate(wallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                }
+
                 spawnedObjects.Add(wall);
             }
         }
 
-        // 3. WEST WALL (left, along length)
+        // 3. WEST WALL
         for (int i = 0; i <= length; i++)
         {
             float xPos = 0;
             float zPos = i * (segmentLength + pillarSize);
 
-            // Skip pillars at corners (already placed)
             if (i > 0 && i < length)
             {
                 Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
-                GameObject pillar = Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent);
-                spawnedObjects.Add(pillar);
+                spawnedObjects.Add(Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent));
             }
 
-            // Place wall segment (except after last pillar)
             if (i < length)
             {
                 float wallZPos = zPos + pillarSize / 2 + segmentLength / 2;
                 Vector3 wallPos = new Vector3(xPos, walllength.y / 2, wallZPos);
-                GameObject wall = Instantiate(wallPrefab, wallPos, Quaternion.identity, PropsParent);
+
+                GameObject wall;
+
+                if (outsideWalls.Contains(WallSide.West) && Random.value < 0.3f)
+                {
+                    wall = Instantiate(windowWallPrefab, wallPos, Quaternion.identity, PropsParent);
+                }
+                else if (doorWall == WallSide.West && i == length / 2)
+                {
+                    wall = Instantiate(doorPrefab, wallPos, Quaternion.identity, PropsParent);
+                }
+                else
+                {
+                    wall = Instantiate(wallPrefab, wallPos, Quaternion.identity, PropsParent);
+                }
+
                 spawnedObjects.Add(wall);
             }
         }
 
-        // 4. EAST WALL (right, along length)
+        // 4. EAST WALL
         for (int i = 0; i <= length; i++)
         {
             float xPos = width * (segmentLength + pillarSize);
             float zPos = i * (segmentLength + pillarSize);
 
-            // Skip pillars at corners (already placed)
             if (i > 0 && i < length)
             {
                 Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
-                GameObject pillar = Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent);
-                spawnedObjects.Add(pillar);
+                spawnedObjects.Add(Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent));
             }
 
-            // Place wall segment (except after last pillar)
             if (i < length)
             {
                 float wallZPos = zPos + pillarSize / 2 + segmentLength / 2;
                 Vector3 wallPos = new Vector3(xPos, walllength.y / 2, wallZPos);
-                GameObject wall = Instantiate(wallPrefab, wallPos, Quaternion.identity, PropsParent);
+
+                GameObject wall;
+
+                if (outsideWalls.Contains(WallSide.East) && Random.value < 0.3f)
+                {
+                    wall = Instantiate(windowWallPrefab, wallPos, Quaternion.identity, PropsParent);
+                }
+                else if (doorWall == WallSide.East && i == length / 2)
+                {
+                    wall = Instantiate(doorPrefab, wallPos, Quaternion.identity, PropsParent);
+                }
+                else
+                {
+                    wall = Instantiate(wallPrefab, wallPos, Quaternion.identity, PropsParent);
+                }
+
                 spawnedObjects.Add(wall);
             }
         }
     }
+
+
+    void ComputeWallLogic()
+    {
+        outsideWalls.Clear();
+
+        if (gridPos.x == 0) outsideWalls.Add(WallSide.West);
+        if (gridPos.x == 2) outsideWalls.Add(WallSide.East);
+        if (gridPos.y == 0) outsideWalls.Add(WallSide.South);
+        if (gridPos.y == 2) outsideWalls.Add(WallSide.North);
+
+        List<WallSide> insideWalls = new List<WallSide>
+    {
+        WallSide.North,
+        WallSide.South,
+        WallSide.East,
+        WallSide.West
+    };
+
+        foreach (var w in outsideWalls)
+            insideWalls.Remove(w);
+
+        doorWall = insideWalls[Random.Range(0, insideWalls.Count)];
+    }
+
 
     private void PlaceTeacherDesk()
     {
@@ -310,7 +415,10 @@ public class LevelGenerator : MonoBehaviour
 
     void GenerateCameras()
     {
-        Cameras.Clear();
+        if(Cameras == null)
+            Cameras = new List<Camera>();
+        else
+            Cameras.Clear();
 
         float segmentLength = walllength.z;
         float pillarSize = pillarlength.z;
@@ -326,11 +434,11 @@ public class LevelGenerator : MonoBehaviour
 
         Vector3[] cameraPositions =
         {
-        new Vector3(cameraOffset, cameraHeight, cameraOffset), // Bottom-left
-        new Vector3(roomWidth - cameraOffset, cameraHeight, cameraOffset), // Bottom-right
-        new Vector3(cameraOffset, cameraHeight, roomLength - cameraOffset), // Top-left
-        new Vector3(roomWidth - cameraOffset, cameraHeight, roomLength - cameraOffset) // Top-right
-    };
+        new Vector3(cameraOffset, pillarlength.y, cameraOffset), // Bottom-left
+        new Vector3(roomWidth - cameraOffset, pillarlength.y, cameraOffset), // Bottom-right
+        new Vector3(roomWidth - cameraOffset, pillarlength.y, roomLength - cameraOffset), // Top-right
+        new Vector3(cameraOffset, pillarlength.y, roomLength - cameraOffset) // Top-left
+        };
 
         for (int i = 0; i < cameraPositions.Length; i++)
         {
