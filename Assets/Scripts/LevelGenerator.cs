@@ -39,7 +39,7 @@ public class LevelGenerator : MonoBehaviour
     private Vector3 playerStartPos;
     [Header("Copy Targets")]
     public int copyTargetCount = 3;
-    private List<Vector3> copyTargetPositions = new List<Vector3>();
+    private List<GameObject> copyTargetPositions = new List<GameObject>();
 
 
     [Header("Lengths")]
@@ -140,26 +140,6 @@ public class LevelGenerator : MonoBehaviour
             Player.GetComponent<Renderer>().bounds.max.y,
             Random.Range(1, columns - 1)
         );
-
-        // Generate multiple copy target positions
-        int attempts = 0;
-        while (copyTargetPositions.Count < copyTargetCount && attempts < 100)
-        {
-            Vector3 pos = new Vector3(
-                Random.Range(1, rows - 1),
-                0,
-                Random.Range(1, columns - 1)
-            );
-
-            // Avoid player position and duplicates
-            if (pos == playerStartPos || copyTargetPositions.Contains(pos))
-            {
-                attempts++;
-                continue;
-            }
-
-            copyTargetPositions.Add(pos);
-        }
     }
 
 
@@ -374,22 +354,20 @@ public class LevelGenerator : MonoBehaviour
 
         Bounds deskBounds = renderers[0].bounds;
         for (int i = 1; i < renderers.Length; i++)
-        {
             deskBounds.Encapsulate(renderers[i].bounds);
-        }
 
         float deskWidth = deskBounds.size.x;
         float deskDepth = deskBounds.size.z;
 
         float roomWidth = walllength.z * width + pillarlength.z * (width - 1);
 
-        // Total width of the desk grid (X axis)
         float gridWidth =
             columns * deskWidth +
             (columns - 1) * columnSpacing;
 
-        // Center the grid in the room
         float startX = (roomWidth - gridWidth) / 2f + deskWidth / 2f;
+
+        List<GameObject> allDesks = new List<GameObject>();
 
         for (int row = 0; row < rows; row++)
         {
@@ -400,18 +378,55 @@ public class LevelGenerator : MonoBehaviour
 
                 Vector3 position = new Vector3(xPos, 0, zPos);
 
-                GameObject studentDesk = Instantiate(
+                GameObject desk = Instantiate(
                     pc_etuPrefab,
                     position,
                     Quaternion.identity,
                     PropsParent
                 );
 
-                spawnedObjects.Add(studentDesk);
+                spawnedObjects.Add(desk);
+                allDesks.Add(desk);
             }
         }
+
+        AssignCopyTargets(allDesks);
     }
 
+
+    void AssignCopyTargets(List<GameObject> desks)
+    {
+        // Safety
+        copyTargetCount = Mathf.Min(copyTargetCount, desks.Count);
+
+        List<GameObject> shuffled = new List<GameObject>(desks);
+
+        // Shuffle
+        for (int i = 0; i < shuffled.Count; i++)
+        {
+            int rnd = Random.Range(i, shuffled.Count);
+            (shuffled[i], shuffled[rnd]) = (shuffled[rnd], shuffled[i]);
+        }
+
+        for (int i = 0; i < copyTargetCount; i++)
+        {
+            GameObject desk = shuffled[i];
+
+            // Add trigger collider if missing
+            if (!desk.TryGetComponent<Collider>(out Collider col))
+            {
+                BoxCollider box = desk.AddComponent<BoxCollider>();
+                box.isTrigger = true;
+            }
+            else
+            {
+                col.isTrigger = true;
+            }
+
+            // Add copy target script
+            desk.AddComponent<CopyTargetDesk>();
+        }
+    }
 
     void GenerateCameras()
     {
