@@ -11,6 +11,8 @@ public class PlayerControls : MonoBehaviour
     public InputActionReference CrouchActionRef;
     public InputActionReference JumpActionRef;
     public InputActionReference SprintActionRef;
+    public InputActionReference InteractActionRef;
+
 
     [Header("Cameras")]
     public List<Camera> Cameras;
@@ -22,6 +24,7 @@ public class PlayerControls : MonoBehaviour
     private int currentCameraIndex = 0;
     private bool isSprinting = false;
     private bool isCrouching = false;
+    private CopyTargetDesk currentDesk;
 
     #region Enable / Disable
 
@@ -33,6 +36,7 @@ public class PlayerControls : MonoBehaviour
         CrouchActionRef.action.Enable();
         JumpActionRef.action.Enable();
         SprintActionRef.action.Enable();
+        InteractActionRef.action.Enable();
 
         NextCameraActionRef.action.performed += OnNextCamera;
         PrevCameraActionRef.action.performed += OnPrevCamera;
@@ -41,6 +45,7 @@ public class PlayerControls : MonoBehaviour
         CrouchActionRef.action.canceled += OnUncrouch;
         SprintActionRef.action.performed += OnSprint;
         SprintActionRef.action.canceled += OnStopSprint;
+        InteractActionRef.action.performed += OnInteract;
     }
 
     private void OnDisable()
@@ -52,6 +57,7 @@ public class PlayerControls : MonoBehaviour
         CrouchActionRef.action.canceled -= OnUncrouch;
         SprintActionRef.action.performed -= OnSprint;
         SprintActionRef.action.canceled -= OnStopSprint;
+        InteractActionRef.action.performed -= OnInteract;
 
         MoveActionRef.action.Disable();
         NextCameraActionRef.action.Disable();
@@ -59,7 +65,9 @@ public class PlayerControls : MonoBehaviour
         CrouchActionRef.action.Disable();
         JumpActionRef.action.Disable();
         SprintActionRef.action.Disable();
+        InteractActionRef.action.Disable();
     }
+
 
     #endregion
 
@@ -135,8 +143,17 @@ public class PlayerControls : MonoBehaviour
         Debug.Log("Stop Sprint");
     }
 
+    void OnInteract(InputAction.CallbackContext ctx)
+    {
+        if (currentDesk == null) return;
+
+        Debug.Log("Interact pressed");
+        currentDesk.StartInteraction();
+    }
+
     #endregion
 
+    #region Camera Management
     void SwitchCamera(int index)
     {
         for (int i = 0; i < Cameras.Count; i++)
@@ -144,4 +161,22 @@ public class PlayerControls : MonoBehaviour
             Cameras[i].gameObject.SetActive(i == index);
         }
     }
+    #endregion
+
+    #region Setters / Getters
+    public void SetCurrentDesk(CopyTargetDesk desk)
+    {
+        currentDesk = desk;
+    }
+
+    public void ClearCurrentDesk(CopyTargetDesk desk)
+    {
+        if (currentDesk == desk)
+        {
+            desk.StopInteraction();
+            currentDesk = null;
+        }
+    }
+
+    #endregion
 }
