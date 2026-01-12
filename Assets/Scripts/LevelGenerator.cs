@@ -48,22 +48,26 @@ public class LevelGenerator : MonoBehaviour
 
     [Header("Cameras")]
     private List<Camera> Cameras;
-
-    [Header("Player")]
-    public GameObject Player;
-    
-
-    [Header("Camera")]
     public Camera cameraPrefab;
     public float cameraOffset = 1f;
 
     [Header("World Grid")]
     private Vector2Int gridPos; // (0..2, 0..2)
 
+    [Header("Characters")]
+    public List<GameObject> rdmcharacters = new List<GameObject>();
+    public List<GameObject> copycharacters = new List<GameObject>();
+    public GameObject teacherCharacter;
+    public GameObject Player;
+
     enum WallSide { North, South, East, West }
     private HashSet<WallSide> outsideWalls = new HashSet<WallSide>();
     private WallSide doorWall;
 
+    public enum Difficulty { Easy, Medium, Hard }
+
+    [Header("Difficulty")]
+    public Difficulty difficulty = Difficulty.Easy;
 
 
     private void Start()
@@ -102,8 +106,13 @@ public class LevelGenerator : MonoBehaviour
             Debug.Log("NavMesh généré avec succès!");
         }
 
-        Player = Instantiate(Player, playerStartPos, Quaternion.identity);
-        
+        Player = Instantiate(
+            Player, 
+            playerStartPos, 
+            Quaternion.identity
+        );
+        Player.transform.localScale = 2.0f * Vector3.one;
+
         GenerateCameras();
 
         Player.GetComponent<PlayerControls>().Cameras = Cameras;
@@ -137,7 +146,7 @@ public class LevelGenerator : MonoBehaviour
         // Player position
         playerStartPos = new Vector3(
             Random.Range(1, rows - 1),
-            Player.GetComponent<Renderer>().bounds.max.y,
+            0,
             Random.Range(1, columns - 1)
         );
     }
@@ -149,13 +158,31 @@ public class LevelGenerator : MonoBehaviour
         float pillarSize = pillarlength.z;
         int scale = Mathf.Max(width, length) + 1;
 
-        Vector3 pos = new Vector3((segmentLength * width + pillarSize * (width + 1)) / 2, 0, (segmentLength * length + pillarSize * (length + 1)) / 2);
-        GameObject floor = Instantiate(floorPrefab, pos, Quaternion.identity, PropsParent);
+        Vector3 pos = new Vector3((
+            segmentLength * width + pillarSize * (width + 1)) / 2, 
+            0, 
+            (segmentLength * length + pillarSize * (length + 1)) / 2
+        );
+        GameObject floor = Instantiate(
+            floorPrefab, 
+            pos, 
+            Quaternion.identity, 
+            PropsParent
+        );
         floor.transform.localScale = new Vector3(scale, 0, scale);
         spawnedObjects.Add(floor);
 
-        pos = new Vector3((segmentLength * width + pillarSize * (width + 1)) / 2, pillarlength.y, (segmentLength * length + pillarSize * (length + 1)) / 2);
-        GameObject roof = Instantiate(floorPrefab, pos, Quaternion.identity, PropsParent);
+        pos = new Vector3((
+            segmentLength * width + pillarSize * (width + 1)) / 2, 
+            pillarlength.y, 
+            (segmentLength * length + pillarSize * (length + 1)) / 2
+        );
+        GameObject roof = Instantiate(
+            floorPrefab, 
+            pos, 
+            Quaternion.identity, 
+            PropsParent
+        );
         roof.transform.localScale = new Vector3(scale, 0, scale);
         spawnedObjects.Add(roof);
     }
@@ -176,7 +203,13 @@ public class LevelGenerator : MonoBehaviour
 
             // Pillars
             Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
-            spawnedObjects.Add(Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent));
+            spawnedObjects.Add(Instantiate(
+                        pillarPrefab, 
+                        pillarPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    )
+                );
 
             // Wall segments
             if (i < width)
@@ -188,15 +221,30 @@ public class LevelGenerator : MonoBehaviour
 
                 if (outsideWalls.Contains(WallSide.North) && Random.value < 0.3f)
                 {
-                    wall = Instantiate(windowWallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                    wall = Instantiate(
+                        windowWallPrefab, 
+                        wallPos, 
+                        Quaternion.Euler(0, 90, 0), 
+                        PropsParent
+                    );
                 }
                 else if (doorWall == WallSide.North && i == width / 2)
                 {
-                    wall = Instantiate(doorPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                    wall = Instantiate(
+                        doorPrefab, 
+                        wallPos, 
+                        Quaternion.Euler(0, 90, 0), 
+                        PropsParent
+                    );
                 }
                 else
                 {
-                    wall = Instantiate(wallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                    wall = Instantiate(
+                        wallPrefab, 
+                        wallPos, 
+                        Quaternion.Euler(0, 90, 0), 
+                        PropsParent
+                    );
                 }
 
                 spawnedObjects.Add(wall);
@@ -210,7 +258,13 @@ public class LevelGenerator : MonoBehaviour
             float zPos = 0;
 
             Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
-            spawnedObjects.Add(Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent));
+            spawnedObjects.Add(Instantiate(
+                        pillarPrefab, 
+                        pillarPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    )
+                );
 
             if (i < width)
             {
@@ -221,15 +275,30 @@ public class LevelGenerator : MonoBehaviour
 
                 if (outsideWalls.Contains(WallSide.South) && Random.value < 0.3f)
                 {
-                    wall = Instantiate(windowWallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                    wall = Instantiate(
+                        windowWallPrefab, 
+                        wallPos, 
+                        Quaternion.Euler(0, 90, 0), 
+                        PropsParent
+                    );
                 }
                 else if (doorWall == WallSide.South && i == width / 2)
                 {
-                    wall = Instantiate(doorPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                    wall = Instantiate(
+                        doorPrefab, 
+                        wallPos, 
+                        Quaternion.Euler(0, 90, 0), 
+                        PropsParent
+                    );
                 }
                 else
                 {
-                    wall = Instantiate(wallPrefab, wallPos, Quaternion.Euler(0, 90, 0), PropsParent);
+                    wall = Instantiate(
+                        wallPrefab, 
+                        wallPos, 
+                        Quaternion.Euler(0, 90, 0), 
+                        PropsParent
+                    );
                 }
 
                 spawnedObjects.Add(wall);
@@ -245,7 +314,13 @@ public class LevelGenerator : MonoBehaviour
             if (i > 0 && i < length)
             {
                 Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
-                spawnedObjects.Add(Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent));
+                spawnedObjects.Add(Instantiate(
+                        pillarPrefab, 
+                        pillarPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    )
+                );
             }
 
             if (i < length)
@@ -257,15 +332,30 @@ public class LevelGenerator : MonoBehaviour
 
                 if (outsideWalls.Contains(WallSide.West) && Random.value < 0.3f)
                 {
-                    wall = Instantiate(windowWallPrefab, wallPos, Quaternion.identity, PropsParent);
+                    wall = Instantiate(
+                        windowWallPrefab, 
+                        wallPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    );
                 }
                 else if (doorWall == WallSide.West && i == length / 2)
                 {
-                    wall = Instantiate(doorPrefab, wallPos, Quaternion.identity, PropsParent);
+                    wall = Instantiate(
+                        doorPrefab, 
+                        wallPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    );
                 }
                 else
                 {
-                    wall = Instantiate(wallPrefab, wallPos, Quaternion.identity, PropsParent);
+                    wall = Instantiate(
+                        wallPrefab, 
+                        wallPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    );
                 }
 
                 spawnedObjects.Add(wall);
@@ -281,7 +371,13 @@ public class LevelGenerator : MonoBehaviour
             if (i > 0 && i < length)
             {
                 Vector3 pillarPos = new Vector3(xPos, pillarlength.y / 2, zPos);
-                spawnedObjects.Add(Instantiate(pillarPrefab, pillarPos, Quaternion.identity, PropsParent));
+                spawnedObjects.Add(Instantiate(
+                        pillarPrefab, 
+                        pillarPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    )
+                );
             }
 
             if (i < length)
@@ -293,15 +389,30 @@ public class LevelGenerator : MonoBehaviour
 
                 if (outsideWalls.Contains(WallSide.East) && Random.value < 0.3f)
                 {
-                    wall = Instantiate(windowWallPrefab, wallPos, Quaternion.identity, PropsParent);
+                    wall = Instantiate(
+                        windowWallPrefab, 
+                        wallPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    );
                 }
                 else if (doorWall == WallSide.East && i == length / 2)
                 {
-                    wall = Instantiate(doorPrefab, wallPos, Quaternion.identity, PropsParent);
+                    wall = Instantiate(
+                        doorPrefab, 
+                        wallPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    );
                 }
                 else
                 {
-                    wall = Instantiate(wallPrefab, wallPos, Quaternion.identity, PropsParent);
+                    wall = Instantiate(
+                        wallPrefab, 
+                        wallPos, 
+                        Quaternion.identity, 
+                        PropsParent
+                    );
                 }
 
                 spawnedObjects.Add(wall);
@@ -337,16 +448,41 @@ public class LevelGenerator : MonoBehaviour
     private void PlaceTeacherDesk()
     {
         float segmentLength = walllength.z;
-        float pillarSize = pillarlength.z;
-
 
         float xPos = segmentLength;
         float zPos = segmentLength / 2;
 
         Vector3 teacherPos = new Vector3(xPos, 0, zPos);
-        GameObject teacherDesk = Instantiate(pc_profPrefab, teacherPos, Quaternion.identity, PropsParent);
+
+        // Desk
+        GameObject teacherDesk = Instantiate(
+            pc_profPrefab,
+            teacherPos,
+            Quaternion.identity,
+            PropsParent
+        );
         spawnedObjects.Add(teacherDesk);
+
+        // Teacher
+        teacherCharacter = Instantiate(
+            teacherCharacter,
+            teacherPos + new Vector3(0, 0, -1f),
+            Quaternion.Euler(0, 180, 0)
+        );
+        teacherCharacter.transform.localScale = 2.0f * Vector3.one;
+
+        // === PATROL POINTS ===
+        ProfessorAI ai = teacherCharacter.GetComponent<ProfessorAI>();
+
+        if (ai != null)
+        {
+            List<Transform> patrols = GenerateProfessorPatrolPoints(teacherPos);
+            ai.SetPatrolPoints(patrols);
+            ai.SetDifficulty(difficulty);
+
+        }
     }
+
 
     private void GenerateStudentDesks()
     {
@@ -387,6 +523,15 @@ public class LevelGenerator : MonoBehaviour
 
                 spawnedObjects.Add(desk);
                 allDesks.Add(desk);
+
+                // Place random character at desk
+                GameObject characterPrefab = rdmcharacters[Random.Range(0, rdmcharacters.Count)];
+                GameObject character = Instantiate(
+                    characterPrefab,
+                    position + new Vector3(0, 0, -0.5f),
+                    Quaternion.Euler(0, 180, 0)
+                );
+                character.transform.localScale = 2.0f * Vector3.one;
             }
         }
 
@@ -470,6 +615,53 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
+    List<Transform> GenerateProfessorPatrolPoints(Vector3 deskPosition)
+    {
+        List<Transform> patrolPoints = new List<Transform>();
 
+        float segmentLength = walllength.z;
+        float pillarSize = pillarlength.z;
+
+        float roomWidth = width * (segmentLength + pillarSize);
+        float roomLength = length * (segmentLength + pillarSize);
+
+        float wallOffset = 1.2f; // Prevent walking into walls
+
+        // --- Desk patrol point (always exists) ---
+        patrolPoints.Add(CreatePatrolPoint(deskPosition, "DeskPoint"));
+
+        if (difficulty == Difficulty.Easy)
+            return patrolPoints;
+
+        // --- Room corners ---
+        Vector3[] corners =
+        {
+        new Vector3(wallOffset, 0, wallOffset),
+        new Vector3(roomWidth - wallOffset, 0, wallOffset),
+        new Vector3(roomWidth - wallOffset, 0, roomLength - wallOffset),
+        new Vector3(wallOffset, 0, roomLength - wallOffset)
+    };
+
+        if (difficulty == Difficulty.Medium)
+        {
+            patrolPoints.Add(CreatePatrolPoint(corners[0], "CornerA"));
+            patrolPoints.Add(CreatePatrolPoint(corners[2], "CornerB"));
+        }
+        else if (difficulty == Difficulty.Hard)
+        {
+            for (int i = 0; i < corners.Length; i++)
+            {
+                patrolPoints.Add(CreatePatrolPoint(corners[i], $"Corner{i}"));
+            }
+        }
+
+        return patrolPoints;
+    }
+    Transform CreatePatrolPoint(Vector3 position, string name)
+    {
+        GameObject point = new GameObject(name);
+        point.transform.position = position;
+        return point.transform;
+    }
 
 }
