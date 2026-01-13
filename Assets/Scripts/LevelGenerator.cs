@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
+using Unity.VisualScripting;
+using UnityEngine.AI;
 
 public class LevelGenerator : MonoBehaviour
 {
@@ -13,7 +15,7 @@ public class LevelGenerator : MonoBehaviour
     public GameObject pillarPrefab;
     public GameObject pc_etuPrefab;
     public GameObject pc_profPrefab;
-    public GameObject windowWallPrefab;
+    public List<GameObject> windowWallPrefab;
     public GameObject doorPrefab;
 
 
@@ -35,11 +37,13 @@ public class LevelGenerator : MonoBehaviour
 
     private List<GameObject> spawnedObjects = new List<GameObject>();
 
-    [Header("Important Positions")]
-    private Vector3 playerStartPos;
     [Header("Copy Targets")]
     public int copyTargetCount = 3;
     private List<GameObject> copyTargetPositions = new List<GameObject>();
+
+    [Header("Player Desk")]
+    private GameObject playerDesk;
+    public Vector3 playerDeskOffset = new Vector3(0, 0, -1f);
 
 
     [Header("Lengths")]
@@ -60,14 +64,17 @@ public class LevelGenerator : MonoBehaviour
     public GameObject teacherCharacter;
     public GameObject Player;
 
+    [Header("Random Obstacles")]
+    public List<GameObject> obstaclePrefabs = new List<GameObject>();
+    public int obstacleCount = 5;
+    public float obstacleWallOffset = 0.5f;
+
+
     enum WallSide { North, South, East, West }
     private HashSet<WallSide> outsideWalls = new HashSet<WallSide>();
     private WallSide doorWall;
 
-    public enum Difficulty { Easy, Medium, Hard }
-
-    [Header("Difficulty")]
-    public Difficulty difficulty = Difficulty.Easy;
+    
 
 
     private void Start()
@@ -81,37 +88,41 @@ public class LevelGenerator : MonoBehaviour
     {
         ClearLevel();
 
-        // 0. Choisir une position dans la grille 3x3
+        // Choisir une position dans la grille 3x3
         PickGridPosition();
 
-        // Définir les positions importantes
-        DefineKeyPositions();
+        Player = Instantiate(
+            Player,
+            Vector3.one,
+            Quaternion.identity
+        );
+        Player.transform.localScale = 2.0f * Vector3.one;
 
-        // 1. Générer le sol
+
+        // Générer le sol
         GenerateFloor();
 
-        // 2. Générer les murs extérieurs avec piliers
+        // Générer les murs extérieurs avec piliers
         GenerateWallsWithPillars();
 
-        // 3. Placer le bureau du professeur
+        // Placer le bureau du professeur
         PlaceTeacherDesk();
 
-        // 4. Générer les bureaux d'étudiants en rangées
+        // Générer les bureaux d'étudiants en rangées
         GenerateStudentDesks();
 
-        // 5. Générer le NavMesh
+        GenerateRandomObstacles();
+
+        MakeObstaclesNavMesh();
+
+        // Générer le NavMesh
         if (navMeshSurface != null)
         {
             navMeshSurface.BuildNavMesh();
             Debug.Log("NavMesh généré avec succès!");
         }
 
-        Player = Instantiate(
-            Player, 
-            playerStartPos, 
-            Quaternion.identity
-        );
-        Player.transform.localScale = 2.0f * Vector3.one;
+        
 
         GenerateCameras();
 
@@ -136,19 +147,6 @@ public class LevelGenerator : MonoBehaviour
         );
 
         Debug.Log($"Room grid position: {gridPos}");
-    }
-
-
-    void DefineKeyPositions()
-    {
-        copyTargetPositions.Clear();
-
-        // Player position
-        playerStartPos = new Vector3(
-            Random.Range(1, rows - 1),
-            0,
-            Random.Range(1, columns - 1)
-        );
     }
 
 
@@ -222,7 +220,7 @@ public class LevelGenerator : MonoBehaviour
                 if (outsideWalls.Contains(WallSide.North) && Random.value < 0.3f)
                 {
                     wall = Instantiate(
-                        windowWallPrefab, 
+                        windowWallPrefab[Random.Range(0, windowWallPrefab.Count)], 
                         wallPos, 
                         Quaternion.Euler(0, 90, 0), 
                         PropsParent
@@ -276,7 +274,7 @@ public class LevelGenerator : MonoBehaviour
                 if (outsideWalls.Contains(WallSide.South) && Random.value < 0.3f)
                 {
                     wall = Instantiate(
-                        windowWallPrefab, 
+                        windowWallPrefab[Random.Range(0, windowWallPrefab.Count)], 
                         wallPos, 
                         Quaternion.Euler(0, 90, 0), 
                         PropsParent
@@ -333,7 +331,7 @@ public class LevelGenerator : MonoBehaviour
                 if (outsideWalls.Contains(WallSide.West) && Random.value < 0.3f)
                 {
                     wall = Instantiate(
-                        windowWallPrefab, 
+                        windowWallPrefab[Random.Range(0, windowWallPrefab.Count)], 
                         wallPos, 
                         Quaternion.identity, 
                         PropsParent
@@ -390,7 +388,7 @@ public class LevelGenerator : MonoBehaviour
                 if (outsideWalls.Contains(WallSide.East) && Random.value < 0.3f)
                 {
                     wall = Instantiate(
-                        windowWallPrefab, 
+                        windowWallPrefab[Random.Range(0, windowWallPrefab.Count)], 
                         wallPos, 
                         Quaternion.identity, 
                         PropsParent
@@ -466,21 +464,11 @@ public class LevelGenerator : MonoBehaviour
         // Teacher
         teacherCharacter = Instantiate(
             teacherCharacter,
-            teacherPos + new Vector3(0, 0, -1f),
+            teacherPos + new Vector3(2, 0, -1f),
             Quaternion.Euler(0, 180, 0)
         );
         teacherCharacter.transform.localScale = 2.0f * Vector3.one;
 
-        // === PATROL POINTS ===
-        ProfessorAI ai = teacherCharacter.GetComponent<ProfessorAI>();
-
-        if (ai != null)
-        {
-            List<Transform> patrols = GenerateProfessorPatrolPoints(teacherPos);
-            ai.SetPatrolPoints(patrols);
-            ai.SetDifficulty(difficulty);
-
-        }
     }
 
 
@@ -505,6 +493,10 @@ public class LevelGenerator : MonoBehaviour
 
         List<GameObject> allDesks = new List<GameObject>();
 
+        // Choose player desk index
+        int playerDeskIndex = Random.Range(0, rows * columns);
+        int currentIndex = 0;
+
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < columns; col++)
@@ -522,21 +514,42 @@ public class LevelGenerator : MonoBehaviour
                 );
 
                 spawnedObjects.Add(desk);
-                allDesks.Add(desk);
 
-                // Place random character at desk
-                GameObject characterPrefab = rdmcharacters[Random.Range(0, rdmcharacters.Count)];
-                GameObject character = Instantiate(
-                    characterPrefab,
-                    position + new Vector3(0, 0, -0.5f),
-                    Quaternion.Euler(0, 180, 0)
-                );
-                character.transform.localScale = 2.0f * Vector3.one;
+                bool isPlayerDesk = currentIndex == playerDeskIndex;
+
+                if (isPlayerDesk)
+                {
+                    playerDesk = desk;
+
+                    // Place player next to the desk
+                    Player.transform.position = position + playerDeskOffset;
+                    Player.transform.rotation = Quaternion.Euler(0, 180, 0);
+                }
+                else
+                {
+                    allDesks.Add(desk);
+
+                    // Spawn random student
+                    GameObject characterPrefab =
+                        rdmcharacters[Random.Range(0, rdmcharacters.Count)];
+
+                    GameObject character = Instantiate(
+                        characterPrefab,
+                        position + new Vector3(0, 0, -0.5f),
+                        Quaternion.Euler(0, 180, 0)
+                    );
+
+                    character.transform.localScale = 2.0f * Vector3.one;
+                }
+
+                currentIndex++;
             }
         }
 
+        // Assign copy targets only to non-player desks
         AssignCopyTargets(allDesks);
     }
+
 
 
     void AssignCopyTargets(List<GameObject> desks)
@@ -570,8 +583,125 @@ public class LevelGenerator : MonoBehaviour
 
             // Add copy target script
             desk.AddComponent<CopyTargetDesk>();
+
+            //Glow effect
+            MakeDeskGlow(desk);
         }
     }
+
+    void MakeDeskGlow(GameObject desk)
+    {
+        Renderer[] renderers = desk.GetComponentsInChildren<Renderer>();
+
+        foreach (Renderer rend in renderers)
+        {
+            foreach (Material mat in rend.materials)
+            {
+                mat.EnableKeyword("_EMISSION");
+                mat.SetColor("_EmissionColor", Color.yellow * 0.5f);
+            }
+        }
+    }
+
+    void GenerateRandomObstacles()
+    {
+        if (obstaclePrefabs.Count == 0 || obstacleCount <= 0)
+            return;
+
+        float segmentLength = walllength.z;
+        float pillarSize = pillarlength.z;
+
+        float roomWidth = width * (segmentLength + pillarSize);
+        float roomLength = length * (segmentLength + pillarSize);
+
+        List<WallSide> validWalls = new List<WallSide>
+    {
+        WallSide.North,
+        WallSide.South,
+        WallSide.East,
+        WallSide.West
+    };
+
+        // Remove door wall
+        validWalls.Remove(doorWall);
+
+        // Remove outside walls (they may have windows)
+        foreach (WallSide wall in outsideWalls)
+            validWalls.Remove(wall);
+
+        if (validWalls.Count == 0)
+            return;
+
+        for (int i = 0; i < obstacleCount; i++)
+        {
+            WallSide wall = validWalls[Random.Range(0, validWalls.Count)];
+            GameObject prefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Count)];
+
+            Vector3 pos = Vector3.zero;
+            Quaternion rot = Quaternion.identity;
+
+            switch (wall)
+            {
+                case WallSide.North:
+                    pos = new Vector3(
+                        Random.Range(pillarSize, roomWidth - pillarSize),
+                        0,
+                        roomLength - obstacleWallOffset
+                    );
+                    rot = Quaternion.Euler(0, 180, 0);
+                    break;
+
+                case WallSide.South:
+                    pos = new Vector3(
+                        Random.Range(pillarSize, roomWidth - pillarSize),
+                        0,
+                        obstacleWallOffset
+                    );
+                    rot = Quaternion.identity;
+                    break;
+
+                case WallSide.East:
+                    pos = new Vector3(
+                        roomWidth - obstacleWallOffset,
+                        0,
+                        Random.Range(pillarSize, roomLength - pillarSize)
+                    );
+                    rot = Quaternion.Euler(0, -90, 0);
+                    break;
+
+                case WallSide.West:
+                    pos = new Vector3(
+                        obstacleWallOffset,
+                        0,
+                        Random.Range(pillarSize, roomLength - pillarSize)
+                    );
+                    rot = Quaternion.Euler(0, 90, 0);
+                    break;
+            }
+
+            GameObject obstacle = Instantiate(
+                prefab,
+                pos,
+                rot,
+                PropsParent
+            );
+
+            spawnedObjects.Add(obstacle);
+        }
+    }
+
+
+
+    void MakeObstaclesNavMesh()
+    {
+        foreach (GameObject obj in spawnedObjects)
+        {
+            NavMeshObstacle navmeshobj = obj.AddComponent<NavMeshObstacle>();
+            navmeshobj.carving = true;
+            navmeshobj.shape = NavMeshObstacleShape.Box;
+        }
+    }
+
 
     void GenerateCameras()
     {
@@ -613,55 +743,6 @@ public class LevelGenerator : MonoBehaviour
 
             Cameras.Add(cam);
         }
-    }
-
-    List<Transform> GenerateProfessorPatrolPoints(Vector3 deskPosition)
-    {
-        List<Transform> patrolPoints = new List<Transform>();
-
-        float segmentLength = walllength.z;
-        float pillarSize = pillarlength.z;
-
-        float roomWidth = width * (segmentLength + pillarSize);
-        float roomLength = length * (segmentLength + pillarSize);
-
-        float wallOffset = 1.2f; // Prevent walking into walls
-
-        // --- Desk patrol point (always exists) ---
-        patrolPoints.Add(CreatePatrolPoint(deskPosition, "DeskPoint"));
-
-        if (difficulty == Difficulty.Easy)
-            return patrolPoints;
-
-        // --- Room corners ---
-        Vector3[] corners =
-        {
-        new Vector3(wallOffset, 0, wallOffset),
-        new Vector3(roomWidth - wallOffset, 0, wallOffset),
-        new Vector3(roomWidth - wallOffset, 0, roomLength - wallOffset),
-        new Vector3(wallOffset, 0, roomLength - wallOffset)
-    };
-
-        if (difficulty == Difficulty.Medium)
-        {
-            patrolPoints.Add(CreatePatrolPoint(corners[0], "CornerA"));
-            patrolPoints.Add(CreatePatrolPoint(corners[2], "CornerB"));
-        }
-        else if (difficulty == Difficulty.Hard)
-        {
-            for (int i = 0; i < corners.Length; i++)
-            {
-                patrolPoints.Add(CreatePatrolPoint(corners[i], $"Corner{i}"));
-            }
-        }
-
-        return patrolPoints;
-    }
-    Transform CreatePatrolPoint(Vector3 position, string name)
-    {
-        GameObject point = new GameObject(name);
-        point.transform.position = position;
-        return point.transform;
     }
 
 }

@@ -21,10 +21,24 @@ public class PlayerControls : MonoBehaviour
     [SerializeField] private float speed = 10f;
     [SerializeField] private float speedMultiplier = 1.0f;
 
+    [Header("Jump")]
+    [SerializeField] private float jumpHeight = 1.5f;
+    [SerializeField] private float gravity = -9.81f;
+
+    private float verticalVelocity;
+
+
     private int currentCameraIndex = 0;
     private bool isSprinting = false;
     private bool isCrouching = false;
     private CopyTargetDesk currentDesk;
+    private CharacterController controller;
+
+    private void Awake()
+    {
+        controller = GetComponent<CharacterController>();
+    }
+
 
     #region Enable / Disable
 
@@ -80,15 +94,39 @@ public class PlayerControls : MonoBehaviour
 
     void HandleMovement()
     {
+        if (Cameras == null || Cameras.Count == 0)
+            return;
+
+        Camera activeCam = Cameras[currentCameraIndex];
         Vector2 input = MoveActionRef.action.ReadValue<Vector2>();
 
-        Vector3 move =
-            transform.right * input.x +
-            transform.forward * input.y;
+        Vector3 camForward = activeCam.transform.forward;
+        Vector3 camRight = activeCam.transform.right;
 
-        float currentSpeed = isSprinting ? speed * speedMultiplier : speed;
-        transform.position += move * currentSpeed * Time.deltaTime;
+        camForward.y = 0;
+        camRight.y = 0;
+        camForward.Normalize();
+        camRight.Normalize();
+
+        Vector3 move =
+            camRight * input.x +
+            camForward * input.y;
+
+        float currentSpeed = speed * speedMultiplier;
+
+        if (controller.isGrounded && verticalVelocity < 0)
+            verticalVelocity = -2f; // keeps grounded
+
+        verticalVelocity += gravity * Time.deltaTime;
+
+        Vector3 finalMove = move * currentSpeed;
+        finalMove.y = verticalVelocity;
+
+        controller.Move(finalMove * Time.deltaTime);
     }
+
+
+
 
     #endregion
 
@@ -111,9 +149,12 @@ public class PlayerControls : MonoBehaviour
 
     void OnJump(InputAction.CallbackContext ctx)
     {
-        Debug.Log("Jump");
-        // Add jump logic (Rigidbody, CharacterController, etc.)
+        if (!controller.isGrounded)
+            return;
+
+        verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
     }
+
 
     void OnCrouch(InputAction.CallbackContext ctx)
     {
@@ -131,6 +172,8 @@ public class PlayerControls : MonoBehaviour
 
     void OnSprint(InputAction.CallbackContext ctx)
     {
+        if (isCrouching)
+            return;
         isSprinting = true;
         speedMultiplier = 2f;
         Debug.Log("Sprint");
@@ -138,6 +181,8 @@ public class PlayerControls : MonoBehaviour
 
     void OnStopSprint(InputAction.CallbackContext ctx)
     {
+        if (isCrouching)
+            return;
         isSprinting = false;
         speedMultiplier = 1f;
         Debug.Log("Stop Sprint");

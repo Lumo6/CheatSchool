@@ -8,6 +8,11 @@ public class GameManager : MonoBehaviour
     bool copied = false;
     public GameObject player;
 
+    public enum Difficulty { Easy, Medium, Hard }
+
+    [Header("Difficulty")]
+    public Difficulty difficulty = Difficulty.Easy;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
