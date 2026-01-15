@@ -130,7 +130,6 @@ GameObject:
   - component: {fileID: 398123287}
   - component: {fileID: 398123286}
   - component: {fileID: 398123288}
-  - component: {fileID: 398123289}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -161,13 +160,13 @@ MonoBehaviour:
   - {fileID: 1471179749966258, guid: d8553808ed1fd2a41982e26a8f099b9a, type: 3}
   - {fileID: 1477330340642922, guid: 7218b9728928b894eb1799b26af67733, type: 3}
   doorPrefab: {fileID: 1999326427868500, guid: 4af663313fdc5d04889a6710948329c3, type: 3}
+  patrolPointsPrefab: {fileID: 5736711106150630158, guid: d6b5217b7feddc142b0ea5be9c1362b8, type: 3}
   rows: 4
   columns: 5
-  rowSpacing: 1
+  rowSpacing: 1.5
   columnSpacing: 1.5
   length: 3
   width: 3
-  navMeshSurface: {fileID: 0}
   copyTargetCount: 3
   playerDeskOffset: {x: 0, y: 0, z: -1}
   cameraPrefab: {fileID: 7219118050305129, guid: 014053d2fa933f34fa8823e37fe76af4, type: 3}
@@ -222,21 +221,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f120c646c4448444eb722dbf5d218a04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  player: {fileID: 89773051568590808, guid: 4ad2f86f68a144d40989a22c3f943dbf, type: 3}
   difficulty: 0
---- !u!114 &398123289
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 398123285}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1b6d81412a36474dbdd388d922ed622, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SuspicionUIBinder
-  suspicionUI: {fileID: 0}
+  copyDuration: 5
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0

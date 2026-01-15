@@ -94,6 +94,9 @@ public class PlayerControls : MonoBehaviour
 
     void HandleMovement()
     {
+        if (GameManager.Instance.IsCopying())
+            return;
+
         if (Cameras == null || Cameras.Count == 0)
             return;
 
@@ -192,9 +195,9 @@ public class PlayerControls : MonoBehaviour
     {
         if (currentDesk == null) return;
 
-        Debug.Log("Interact pressed");
-        currentDesk.StartInteraction();
+        currentDesk.StartInteraction(this);
     }
+
 
     #endregion
 
@@ -222,6 +225,10 @@ public class PlayerControls : MonoBehaviour
             currentDesk = null;
         }
     }
-
+    public bool IsMoving()
+    {
+        Vector2 input = MoveActionRef.action.ReadValue<Vector2>();
+        return input.sqrMagnitude > 0.01f;
+    }
     #endregion
 }
