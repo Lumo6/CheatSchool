@@ -94,14 +94,16 @@ public class LevelGenerator : MonoBehaviour
 
         GenerateRandomObstacles();
 
+        navMeshSurface = floor.GetComponent<NavMeshSurface>();
+        navMeshSurface.BuildNavMesh();
+
         // Now generate teacher
         GenerateTeacher();
 
         GenerateCameras();
         GeneratePlayer();
 
-        navMeshSurface = floor.GetComponent<NavMeshSurface>();
-        navMeshSurface.BuildNavMesh();
+        
     }
 
     private void Start()
@@ -512,7 +514,7 @@ public class LevelGenerator : MonoBehaviour
 
                     GameObject character = Instantiate(
                         characterPrefab,
-                        position + new Vector3(0, 0, -0.5f),
+                        position + new Vector3(0.2f, 0.8f, 0),
                         Quaternion.Euler(0, 180, 0),
                         PropsParent
                     );
@@ -731,7 +733,7 @@ public class LevelGenerator : MonoBehaviour
             new Vector3(walloffset, 0, walloffset),
             new Vector3(walloffset, 0, roomLength - walloffset),
             new Vector3(roomWidth - walloffset, 0, roomLength - walloffset),
-            new Vector3(roomWidth - walloffset, 0, roomLength - walloffset)
+            new Vector3(roomWidth - walloffset, 0, walloffset)
         };
 
         foreach (Vector3 position in positions)

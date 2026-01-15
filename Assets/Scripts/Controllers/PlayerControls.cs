@@ -26,17 +26,16 @@ public class PlayerControls : MonoBehaviour
     [SerializeField] private float gravity = -9.81f;
 
     private float verticalVelocity;
-
+    private Animator animator;
 
     private int currentCameraIndex = 0;
-    private bool isSprinting = false;
-    private bool isCrouching = false;
     private CopyTargetDesk currentDesk;
     private CharacterController controller;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
     }
 
 
@@ -156,37 +155,30 @@ public class PlayerControls : MonoBehaviour
             return;
 
         verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        animator.SetTrigger("Jump");
     }
 
 
     void OnCrouch(InputAction.CallbackContext ctx)
     {
-        isCrouching = true;
         speedMultiplier = 0.2f;
         Debug.Log("Crouch");
     }
 
     void OnUncrouch(InputAction.CallbackContext ctx)
     {
-        isCrouching = false;
         speedMultiplier = 1f;
         Debug.Log("Uncrouch");
     }
 
     void OnSprint(InputAction.CallbackContext ctx)
     {
-        if (isCrouching)
-            return;
-        isSprinting = true;
         speedMultiplier = 2f;
         Debug.Log("Sprint");
     }
 
     void OnStopSprint(InputAction.CallbackContext ctx)
     {
-        if (isCrouching)
-            return;
-        isSprinting = false;
         speedMultiplier = 1f;
         Debug.Log("Stop Sprint");
     }

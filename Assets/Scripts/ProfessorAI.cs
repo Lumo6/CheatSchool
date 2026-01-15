@@ -11,7 +11,7 @@ public class ProfessorAI : MonoBehaviour
     public float viewDistance = 10f;
     public float viewAngle = 60f;
     public Vector3[] patrolPoints;
-    private int currentIndex;
+    private int currentIndex = 0;
     public LayerMask obstacleMask;
     public GameObject player;
     private void Awake()
@@ -38,8 +38,8 @@ public class ProfessorAI : MonoBehaviour
 
         if (agent.remainingDistance <= agent.stoppingDistance)
         {
-            currentIndex = (currentIndex + 1) % patrolPoints.Length;
             agent.SetDestination(patrolPoints[currentIndex]);
+            currentIndex = (currentIndex + 1) % patrolPoints.Length;
         }
     }
 
