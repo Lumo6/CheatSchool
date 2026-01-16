@@ -1,36 +1,50 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class ProfessorAI : MonoBehaviour
 {
-    [SerializeField]
-    private NavMeshAgent agent;
+    [Header("References")]
+    public NavMeshAgent agent;
+    public GameObject player;
+
     [Header("Vision")]
     public float viewDistance = 10f;
-    public float viewAngle = 60f;
+    public float viewAngle = 120f;
+
+    [Header("Patrol")]
     public Vector3[] patrolPoints;
     private int currentIndex = 0;
-    public LayerMask obstacleMask;
-    public GameObject player;
-    private void Awake()
+
+    [Header("Suspicion")]
+    public float maxSuspicion = 100f;
+    public float suspicionIncreaseRate = 40f;
+    public float suspicionDecreaseRate = 20f;
+    public float rotationSpeed = 5f;
+    public float stopDuration = 0.5f;
+
+    private float suspicion = 0f;
+    private float stopTimer = 0f;
+
+    void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
     }
 
-    private void Update()
+    void Update()
     {
-        Patrol();
-        DetectPlayer();
+        if (GameManager.Instance.CurrentState == GameManager.GameState.Spotted_GameOver)
+            return;
+
+        bool seesPlayer = DetectPlayer();
+
+        UpdateSuspicion(seesPlayer);
+        HandleMovement(seesPlayer);
     }
 
     void Patrol()
     {
-        if (patrolPoints.Length == 0)
-            return;
-
-        if (!agent.isOnNavMesh)
+        if (patrolPoints.Length == 0 || !agent.isOnNavMesh)
             return;
 
         if (agent.pathPending)
@@ -43,40 +57,92 @@ public class ProfessorAI : MonoBehaviour
         }
     }
 
-    void DetectPlayer()
+    bool DetectPlayer()
     {
         if (player == null)
-            return;
+            return false;
 
         Vector3 dirToPlayer = player.transform.position - transform.position;
         float distance = dirToPlayer.magnitude;
 
         if (distance > viewDistance)
-            return;
+            return false;
 
         float angle = Vector3.Angle(transform.forward, dirToPlayer);
-
         if (angle > viewAngle / 2f)
-            return;
+            return false;
 
         if (Physics.Raycast(
-            transform.position + Vector3.up,
+            transform.position + new Vector3(0,0.5f,0),
             dirToPlayer.normalized,
             out RaycastHit hit,
-            viewDistance,
-            ~obstacleMask))
+            viewDistance))
         {
-            if (hit.transform == player)
-            {
-                Debug.Log("Joueur détecté !");
-                GameOver();
-            }
+            return hit.transform == player.transform;
+        }
+
+        return false;
+    }
+
+    void UpdateSuspicion(bool seesPlayer)
+    {
+        float dt = GameManager.Instance.DeltaTime;
+
+        if (seesPlayer)
+        {
+            suspicion += suspicionIncreaseRate * dt;
+            stopTimer = stopDuration;
+        }
+        else
+        {
+            suspicion -= suspicionDecreaseRate * dt;
+        }
+
+        suspicion = Mathf.Clamp(suspicion, 0f, maxSuspicion);
+
+        if (suspicion >= maxSuspicion)
+        {
+            GameManager.Instance.PlayerSpotted();
         }
     }
 
-    void GameOver()
+    void HandleMovement(bool seesPlayer)
     {
-        Time.timeScale = 0f;
-        Debug.Log("Partie perdue !");
+        if (seesPlayer || stopTimer > 0f)
+        {
+            agent.isStopped = true;
+            stopTimer -= GameManager.Instance.DeltaTime;
+            RotateTowardsPlayer();
+        }
+        else
+        {
+            agent.isStopped = false;
+            Patrol();
+        }
+    }
+
+    void RotateTowardsPlayer()
+    {
+        if (player == null)
+            return;
+
+        Vector3 direction = player.transform.position - transform.position;
+        direction.y = 0f;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            targetRotation,
+            rotationSpeed * GameManager.Instance.DeltaTime
+        );
+    }
+
+    public float GetSuspicion()
+    {
+        return suspicion;
+    }
+    public float GetMaxSuspicion()
+    {
+        return maxSuspicion;
     }
 }

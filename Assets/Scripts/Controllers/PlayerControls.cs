@@ -87,6 +87,14 @@ public class PlayerControls : MonoBehaviour
     private void Update()
     {
         HandleMovement();
+
+        if(IsMoving())
+            animator.SetBool("iswalking", true);
+        else
+            animator.SetBool("iswalking", false);
+
+        bool isGrounded = controller.isGrounded;
+        animator.SetBool("isgrounded", isGrounded);
     }
 
     #region Movement
@@ -115,9 +123,6 @@ public class PlayerControls : MonoBehaviour
             camForward * input.y;
 
         float currentSpeed = speed * speedMultiplier;
-
-        if (controller.isGrounded && verticalVelocity < 0)
-            verticalVelocity = -2f; // keeps grounded
 
         verticalVelocity += gravity * Time.deltaTime;
 
@@ -155,7 +160,7 @@ public class PlayerControls : MonoBehaviour
             return;
 
         verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        animator.SetTrigger("Jump");
+        animator.SetTrigger("jump");
     }
 
 
@@ -163,24 +168,33 @@ public class PlayerControls : MonoBehaviour
     {
         speedMultiplier = 0.2f;
         Debug.Log("Crouch");
+        animator.SetBool("iscrouching", true);
+        animator.SetBool("isrunning", false);
     }
 
     void OnUncrouch(InputAction.CallbackContext ctx)
     {
         speedMultiplier = 1f;
         Debug.Log("Uncrouch");
+        animator.SetBool("iscrouching", false);
     }
 
     void OnSprint(InputAction.CallbackContext ctx)
     {
+        if (animator.GetBool("iscrouching"))
+            return;
         speedMultiplier = 2f;
         Debug.Log("Sprint");
+        animator.SetBool("isrunning", true);
     }
 
     void OnStopSprint(InputAction.CallbackContext ctx)
     {
+        if (animator.GetBool("iscrouching"))
+            return;
         speedMultiplier = 1f;
         Debug.Log("Stop Sprint");
+        animator.SetBool("isrunning", false);
     }
 
     void OnInteract(InputAction.CallbackContext ctx)
@@ -188,6 +202,7 @@ public class PlayerControls : MonoBehaviour
         if (currentDesk == null) return;
 
         currentDesk.StartInteraction(this);
+        animator.SetTrigger("interact");
     }
 
 
@@ -219,6 +234,12 @@ public class PlayerControls : MonoBehaviour
     }
     public bool IsMoving()
     {
+        if (GameManager.Instance.IsCopying())
+            return false;
+
+        if (Cameras == null || Cameras.Count == 0)
+            return false;
+
         Vector2 input = MoveActionRef.action.ReadValue<Vector2>();
         return input.sqrMagnitude > 0.01f;
     }

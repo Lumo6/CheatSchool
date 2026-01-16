@@ -34,9 +34,7 @@ public class LevelGenerator : MonoBehaviour
     public int length = 3;
     public int width = 3;
 
-    [Header("Copy Targets")]
-    public int copyTargetCount = 3;
-    private List<GameObject> copyTargetPositions = new List<GameObject>();
+    
 
     [Header("Player Desk")]
     private GameObject playerDesk;
@@ -75,7 +73,7 @@ public class LevelGenerator : MonoBehaviour
     private float pillarSize;
     private GameObject floor;
     private NavMeshSurface navMeshSurface;
-
+    private List<GameObject> copyTargetPositions = new List<GameObject>();
 
     void GenerateLevel()
     {
@@ -140,7 +138,7 @@ public class LevelGenerator : MonoBehaviour
 
     void GenerateFloor()
     {
-        int scale = Mathf.Max(width, length) + 1;
+        int scale = Mathf.Max(width, length);
 
         Vector3 pos = new Vector3((
             segmentLength * width + pillarSize * (width + 1)) / 2,
@@ -153,24 +151,20 @@ public class LevelGenerator : MonoBehaviour
             Quaternion.identity,
             PropsParent
         );
-        floor.transform.localScale = new Vector3(scale, 0, scale);
         spawnedObjects.Add(floor);
+        floor.transform.localScale = new Vector3(floor.transform.localScale.x * scale, 0, floor.transform.localScale.z * scale);
 
-        pos = new Vector3((
-            segmentLength * width + pillarSize * (width + 1)) / 2,
-            pillarlength.y,
-            (segmentLength * length + pillarSize * (length + 1)) / 2
-        );
+        pos.y = pillarlength.y;
         GameObject roof = Instantiate(
             floorPrefab,
             pos,
             Quaternion.identity,
             PropsParent
         );
-        roof.transform.localScale = new Vector3(scale, 0, scale);
+        spawnedObjects.Add(roof);
+        roof.transform.localScale = new Vector3(roof.transform.localScale.x * scale, 0, roof.transform.localScale.z * scale);
         NavMeshModifier navmodif = roof.AddComponent<NavMeshModifier>();
         navmodif.ignoreFromBuild = true;
-        spawnedObjects.Add(roof);
     }
 
     void GenerateWallsWithPillars()
@@ -534,10 +528,10 @@ public class LevelGenerator : MonoBehaviour
 
     void AssignCopyTargets(List<GameObject> desks)
     {
-        // Safety
-        copyTargetCount = Mathf.Min(copyTargetCount, desks.Count);
 
         List<GameObject> shuffled = new List<GameObject>(desks);
+
+        int nbCopy = GameManager.Instance.nbCopyNeeded;
 
         // Shuffle
         for (int i = 0; i < shuffled.Count; i++)
@@ -546,7 +540,7 @@ public class LevelGenerator : MonoBehaviour
             (shuffled[i], shuffled[rnd]) = (shuffled[rnd], shuffled[i]);
         }
 
-        for (int i = 0; i < copyTargetCount; i++)
+        for (int i = 0; i < nbCopy; i++)
         {
             GameObject desk = shuffled[i];
 
@@ -567,7 +561,7 @@ public class LevelGenerator : MonoBehaviour
             //Glow effect
             MakeDeskGlow(desk);
         }
-        for(int i = copyTargetCount; i < desks.Count; i++)
+        for(int i = nbCopy; i < desks.Count; i++)
         {
             GameObject desk = shuffled[i];
 
@@ -764,7 +758,6 @@ public class LevelGenerator : MonoBehaviour
 
         ProfessorAI ai = teacherCharacter.GetComponent<ProfessorAI>();
         ai.patrolPoints = GenerateTeacherPatrolPoints();
-        ai.player = Player;
     }
 
 
@@ -810,8 +803,9 @@ public class LevelGenerator : MonoBehaviour
 
     void GeneratePlayer()
     {
-        Player = Instantiate(Player, Vector3.one, Quaternion.identity);
+        Player = Instantiate(Player, playerDesk.transform.position + Vector3.one, Quaternion.identity);
         Player.transform.localScale = 2.0f * Vector3.one;
         Player.GetComponent<PlayerControls>().Cameras = Cameras;
+        teacherCharacter.GetComponent<ProfessorAI>().player = Player;
     }
 }

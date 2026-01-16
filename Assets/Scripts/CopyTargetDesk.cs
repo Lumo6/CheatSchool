@@ -54,15 +54,23 @@ public class CopyTargetDesk : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (!other.CompareTag("Player")) 
+            return;
 
-        interactUI?.SetActive(true);
-        other.GetComponent<PlayerControls>()?.SetCurrentDesk(this);
+        if(interactUI == null)
+            return;
+
+        interactUI.SetActive(true);
+        other.GetComponent<PlayerControls>().SetCurrentDesk(this);
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (!other.CompareTag("Player")) 
+            return;
+
+        if (interactUI == null)
+            return;
 
         interactUI?.SetActive(false);
         StopInteraction();
