@@ -4,9 +4,16 @@ using System.Collections;
 [RequireComponent(typeof(Collider))]
 public class CopyTargetDesk : MonoBehaviour
 {
-    [SerializeField] private GameObject interactUI;
 
     private Coroutine copyCoroutine;
+    private GameManager gm;
+    private UIManager ui;
+
+    private void Awake()
+    {
+        gm = GameManager.Instance;
+        ui = UIManager.Instance;
+    }
 
     private void Reset()
     {
@@ -17,7 +24,7 @@ public class CopyTargetDesk : MonoBehaviour
     {
         if (copyCoroutine != null) return;
 
-        GameManager.Instance.StartCopying();
+        gm.StartCopying();
         copyCoroutine = StartCoroutine(CopyRoutine(player));
     }
 
@@ -27,7 +34,7 @@ public class CopyTargetDesk : MonoBehaviour
         {
             StopCoroutine(copyCoroutine);
             copyCoroutine = null;
-            GameManager.Instance.StopCopying();
+            gm.StopCopying();
         }
     }
 
@@ -35,7 +42,7 @@ public class CopyTargetDesk : MonoBehaviour
     {
         float timer = 0f;
 
-        while (timer < GameManager.Instance.copyDuration)
+        while (timer < gm.copyDuration)
         {
             if (player.IsMoving())
             {
@@ -43,13 +50,15 @@ public class CopyTargetDesk : MonoBehaviour
                 StopInteraction();
                 yield break;
             }
-
+            UIManager.Instance.updateCurrentCopyProgressUI(timer / gm.copyDuration);
             timer += Time.deltaTime;
             yield return null;
         }
 
-        GameManager.Instance.CopyCompleted();
+        gm.CopyCompleted();
         copyCoroutine = null;
+        MakeDeskNotGlow();
+        Destroy(this);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -57,11 +66,11 @@ public class CopyTargetDesk : MonoBehaviour
         if (!other.CompareTag("Player")) 
             return;
 
-        if(interactUI == null)
+        if(ui.interactUI == null)
             return;
 
-        interactUI.SetActive(true);
-        other.GetComponent<PlayerControls>().SetCurrentDesk(this);
+        ui.ShowInteractUI(true);
+        gm.currentdesk = this;
     }
 
     private void OnTriggerExit(Collider other)
@@ -69,11 +78,24 @@ public class CopyTargetDesk : MonoBehaviour
         if (!other.CompareTag("Player")) 
             return;
 
-        if (interactUI == null)
+        if (ui.interactUI == null)
             return;
 
-        interactUI?.SetActive(false);
+        ui.ShowInteractUI(false);
         StopInteraction();
-        other.GetComponent<PlayerControls>()?.ClearCurrentDesk(this);
+        gm.currentdesk = null;
+    }
+
+    void MakeDeskNotGlow()
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+
+        foreach (Renderer rend in renderers)
+        {
+            foreach (Material mat in rend.materials)
+            {
+                mat.DisableKeyword("_EMISSION");
+            }
+        }
     }
 }

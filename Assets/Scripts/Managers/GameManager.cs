@@ -23,20 +23,13 @@ public class GameManager : MonoBehaviour
 
     [Header("Chrono")]
     public float GameTime => gameTime;
-    public float DeltaTime => deltaTime;
 
     private float gameTime = 0f;
-    private float deltaTime = 0f;
-    private float copyTimer = 0f;
 
-    private float copyprogress = 5f;
-    public float GetCopyProgress() => copyprogress;
-    public float SetCopyProgress(float value)
-    {
-        copyprogress = value;
-        return copyprogress;
-    }
-    public int nbCopyNeeded;
+    [SerializeField] private float CopyProgress = 0f;
+    
+    public int nbCopyNeeded = 5;
+    public CopyTargetDesk currentdesk;
 
     void Awake()
     {
@@ -54,16 +47,7 @@ public class GameManager : MonoBehaviour
             CurrentState == GameState.Win)
             return;
 
-        deltaTime = Time.deltaTime;
-        gameTime += deltaTime;
-
-        if (CurrentState == GameState.Copying)
-        {
-            copyTimer += deltaTime;
-
-            if (copyTimer >= copyDuration)
-                CopyCompleted();
-        }
+        gameTime += Time.deltaTime;
     }
 
     public void StartCopying()
@@ -71,7 +55,6 @@ public class GameManager : MonoBehaviour
         if (CurrentState != GameState.Playing) return;
 
         CurrentState = GameState.Copying;
-        copyTimer = 0f;
         Debug.Log("Copy started");
     }
 
@@ -80,13 +63,14 @@ public class GameManager : MonoBehaviour
         if (CurrentState != GameState.Copying) return;
 
         CurrentState = GameState.Playing;
-        copyTimer = 0f;
         Debug.Log("Copy interrupted");
     }
 
     public void CopyCompleted()
     {
+        CopyProgress = Mathf.Clamp01(CopyProgress + (1.0f / nbCopyNeeded));
         CurrentState = GameState.Playing;
+        UIManager.Instance.updateCopyProgressUI(CopyProgress);
         Debug.Log("Copy completed");
     }
 
@@ -101,7 +85,7 @@ public class GameManager : MonoBehaviour
 
     public void CheckWin()
     {
-        if (copyprogress >= 1.0f)
+        if (CopyProgress == 1.0f)
         {
             CurrentState = GameState.Win;
             Debug.Log("You win!");

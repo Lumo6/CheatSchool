@@ -74,6 +74,7 @@ public class LevelGenerator : MonoBehaviour
     private GameObject floor;
     private NavMeshSurface navMeshSurface;
     private List<GameObject> copyTargetPositions = new List<GameObject>();
+    private GameManager gm;
 
     void GenerateLevel()
     {
@@ -110,7 +111,7 @@ public class LevelGenerator : MonoBehaviour
         pillarlength = pillarPrefab.GetComponent<MeshRenderer>().bounds.size;
         segmentLength = walllength.z;
         pillarSize = pillarlength.z;
-
+        gm = GameManager.Instance;
         GenerateLevel();
     }
 
@@ -497,6 +498,7 @@ public class LevelGenerator : MonoBehaviour
 
                     Player.transform.position = position + playerDeskOffset;
                     Player.transform.rotation = Quaternion.Euler(0, 180, 0);
+                    MakeDeskGlow(playerDesk, Color.green);
                 }
                 else
                 {
@@ -531,7 +533,7 @@ public class LevelGenerator : MonoBehaviour
 
         List<GameObject> shuffled = new List<GameObject>(desks);
 
-        int nbCopy = GameManager.Instance.nbCopyNeeded;
+        int nbCopy = gm.nbCopyNeeded;
 
         // Shuffle
         for (int i = 0; i < shuffled.Count; i++)
@@ -559,7 +561,7 @@ public class LevelGenerator : MonoBehaviour
             desk.AddComponent<CopyTargetDesk>();
 
             //Glow effect
-            MakeDeskGlow(desk);
+            MakeDeskGlow(desk, Color.yellow);
         }
         for(int i = nbCopy; i < desks.Count; i++)
         {
@@ -576,7 +578,7 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-    void MakeDeskGlow(GameObject desk)
+    void MakeDeskGlow(GameObject desk,Color c)
     {
         Renderer[] renderers = desk.GetComponentsInChildren<Renderer>();
 
@@ -585,7 +587,7 @@ public class LevelGenerator : MonoBehaviour
             foreach (Material mat in rend.materials)
             {
                 mat.EnableKeyword("_EMISSION");
-                mat.SetColor("_EmissionColor", Color.yellow * 0.5f);
+                mat.SetColor("_EmissionColor", c * 0.5f);
             }
         }
     }

@@ -86,16 +86,15 @@ public class ProfessorAI : MonoBehaviour
 
     void UpdateSuspicion(bool seesPlayer)
     {
-        float dt = GameManager.Instance.DeltaTime;
 
         if (seesPlayer)
         {
-            suspicion += suspicionIncreaseRate * dt;
+            suspicion += suspicionIncreaseRate * Time.deltaTime;
             stopTimer = stopDuration;
         }
         else
         {
-            suspicion -= suspicionDecreaseRate * dt;
+            suspicion -= suspicionDecreaseRate * Time.deltaTime;
         }
 
         suspicion = Mathf.Clamp(suspicion, 0f, maxSuspicion);
@@ -104,6 +103,7 @@ public class ProfessorAI : MonoBehaviour
         {
             GameManager.Instance.PlayerSpotted();
         }
+        UIManager.Instance.updateSuspicionProgressUI(suspicion / maxSuspicion);
     }
 
     void HandleMovement(bool seesPlayer)
@@ -111,7 +111,7 @@ public class ProfessorAI : MonoBehaviour
         if (seesPlayer || stopTimer > 0f)
         {
             agent.isStopped = true;
-            stopTimer -= GameManager.Instance.DeltaTime;
+            stopTimer -= Time.deltaTime;
             RotateTowardsPlayer();
         }
         else
@@ -133,7 +133,7 @@ public class ProfessorAI : MonoBehaviour
         transform.rotation = Quaternion.Slerp(
             transform.rotation,
             targetRotation,
-            rotationSpeed * GameManager.Instance.DeltaTime
+            rotationSpeed * Time.deltaTime
         );
     }
 

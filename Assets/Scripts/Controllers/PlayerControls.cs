@@ -29,13 +29,13 @@ public class PlayerControls : MonoBehaviour
     private Animator animator;
 
     private int currentCameraIndex = 0;
-    private CopyTargetDesk currentDesk;
     private CharacterController controller;
-
+    private GameManager gm;
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        gm = GameManager.Instance;
     }
 
 
@@ -101,9 +101,6 @@ public class PlayerControls : MonoBehaviour
 
     void HandleMovement()
     {
-        if (GameManager.Instance.IsCopying())
-            return;
-
         if (Cameras == null || Cameras.Count == 0)
             return;
 
@@ -199,12 +196,11 @@ public class PlayerControls : MonoBehaviour
 
     void OnInteract(InputAction.CallbackContext ctx)
     {
-        if (currentDesk == null) return;
+        if (gm.currentdesk == null) return;
 
-        currentDesk.StartInteraction(this);
+        gm.currentdesk.StartInteraction(this);
         animator.SetTrigger("interact");
     }
-
 
     #endregion
 
@@ -218,20 +214,6 @@ public class PlayerControls : MonoBehaviour
     }
     #endregion
 
-    #region Setters / Getters
-    public void SetCurrentDesk(CopyTargetDesk desk)
-    {
-        currentDesk = desk;
-    }
-
-    public void ClearCurrentDesk(CopyTargetDesk desk)
-    {
-        if (currentDesk == desk)
-        {
-            desk.StopInteraction();
-            currentDesk = null;
-        }
-    }
     public bool IsMoving()
     {
         if (GameManager.Instance.IsCopying())
@@ -243,5 +225,4 @@ public class PlayerControls : MonoBehaviour
         Vector2 input = MoveActionRef.action.ReadValue<Vector2>();
         return input.sqrMagnitude > 0.01f;
     }
-    #endregion
 }
