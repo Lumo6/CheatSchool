@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
@@ -17,7 +18,11 @@ public class UIManager : MonoBehaviour
     [Header("Copy UI")]
     [SerializeField] private Image currentCopyBar;
 
+    [Header("Copy UI")]
+    [SerializeField] private TMPro.TMP_Text resultMessage;
 
+    [Header("EndGame UI")]
+    [SerializeField] private GameObject endGameUI;
 
     void Awake()
     {
@@ -47,5 +52,16 @@ public class UIManager : MonoBehaviour
     public void updateCurrentCopyProgressUI(float nb)
     {
         currentCopyBar.fillAmount = nb;
+    }
+
+    public void ShowEndScreen(string message)
+    {
+        endGameUI.SetActive(true);
+        resultMessage.text = message;
+    }
+
+    public void ChangeScene(string sceneName)
+    {
+        SceneManager.LoadScene(sceneName);
     }
 }

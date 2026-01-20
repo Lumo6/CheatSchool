@@ -80,6 +80,8 @@ public class GameManager : MonoBehaviour
             return;
 
         CurrentState = GameState.Spotted_GameOver;
+        Time.timeScale = 0f;
+        UIManager.Instance.ShowEndScreen("Game Over: Player Spotted");
         Debug.Log("Game Over: Player spotted");
     }
 
@@ -88,6 +90,8 @@ public class GameManager : MonoBehaviour
         if (CopyProgress == 1.0f)
         {
             CurrentState = GameState.Win;
+            Time.timeScale = 0f;
+            UIManager.Instance.ShowEndScreen("You Win!");
             Debug.Log("You win!");
         }
     }

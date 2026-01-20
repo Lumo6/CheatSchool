@@ -54,7 +54,7 @@ public class CopyTargetDesk : MonoBehaviour
             timer += Time.deltaTime;
             yield return null;
         }
-
+        ui.ShowInteractUI(false);
         gm.CopyCompleted();
         copyCoroutine = null;
         MakeDeskNotGlow();
