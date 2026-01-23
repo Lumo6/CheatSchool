@@ -10,6 +10,7 @@ public class SoundFXManager : MonoBehaviour
     [Tooltip("AudioSource prefab for playing sound effects")]
     [SerializeField] private AudioSource soundFXObject;
 
+    private AudioSource[] audioSources;
     private void Awake()
     {
         // Ensure only one instance of SoundFXManager exists
@@ -45,5 +46,13 @@ public class SoundFXManager : MonoBehaviour
 
         // Destroy the AudioSource game object after the clip has finished playing
         Destroy(audioSource.gameObject, audioClip.length);
+    }
+
+    public void updatePlayingSoundVolume()
+    {
+        foreach (AudioSource source in audioSources)
+        {
+            source.volume = PlayerPrefs.GetFloat("Volume", 0.5f);
+        }
     }
 }

@@ -2,7 +2,7 @@ using UnityEngine;
 using LitMotion;
 using LitMotion.Extensions;
 
-public class AnimationButtonIcon : MonoBehaviour
+public class WaveAnimation : MonoBehaviour
 {
     private GameObject iconObject;
     [SerializeField] private float minScale = 0.9f;

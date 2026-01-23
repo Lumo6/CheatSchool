@@ -15,12 +15,10 @@ using UnityEngine.UI;
 public class MenuManager : MonoBehaviour
 {
     [Header("Menu Manager References")]
-    [Tooltip("Slider to adjust sound volume")]
-    public Slider sliderTransform;
     [Tooltip("Name of the scene to load for gameplay")]
-    public string PlayScene;
+    [SerializeField] private string PlayScene;
     [Tooltip("Menu background music clip")]
-    public AudioClip menuMusicClip;
+    [SerializeField] private AudioClip menuMusicClip;
 
 
     public void PlayGame()
@@ -48,14 +46,8 @@ public class MenuManager : MonoBehaviour
         Application.Quit();
     }
 
-    // Initialize the slider value on start
     public void Start()
     {
-        // Initialize slider value to current sound level
-        if (sliderTransform != null)
-        {
-            sliderTransform.value = PlayerPrefs.GetFloat("Volume", 0.5f);
-        }
         SoundFXManager.Instance.PlaySound(menuMusicClip, this.transform, true);
     }
 }

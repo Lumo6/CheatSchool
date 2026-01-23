@@ -5,13 +5,14 @@ using System.Collections.Generic;
 public class PlayerControls : MonoBehaviour
 {
     [Header("Input Actions")]
-    public InputActionReference MoveActionRef;
-    public InputActionReference NextCameraActionRef;
-    public InputActionReference PrevCameraActionRef;
-    public InputActionReference CrouchActionRef;
-    public InputActionReference JumpActionRef;
-    public InputActionReference SprintActionRef;
-    public InputActionReference InteractActionRef;
+    [SerializeField] private InputActionReference MoveActionRef;
+    [SerializeField] private InputActionReference NextCameraActionRef;
+    [SerializeField] private InputActionReference PrevCameraActionRef;
+    [SerializeField] private InputActionReference CrouchActionRef;
+    [SerializeField] private InputActionReference JumpActionRef;
+    [SerializeField] private InputActionReference SprintActionRef;
+    [SerializeField] private InputActionReference InteractActionRef;
+    [SerializeField] private InputActionReference MenuActionRef;
 
 
     [Header("Cameras")]
@@ -20,6 +21,7 @@ public class PlayerControls : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float speed = 10f;
     [SerializeField] private float speedMultiplier = 1.0f;
+    [SerializeField] float rotationSpeed = 10f;
 
     [Header("Jump")]
     [SerializeField] private float jumpHeight = 1.5f;
@@ -50,6 +52,7 @@ public class PlayerControls : MonoBehaviour
         JumpActionRef.action.Enable();
         SprintActionRef.action.Enable();
         InteractActionRef.action.Enable();
+        MenuActionRef.action.Enable();
 
         NextCameraActionRef.action.performed += OnNextCamera;
         PrevCameraActionRef.action.performed += OnPrevCamera;
@@ -59,6 +62,7 @@ public class PlayerControls : MonoBehaviour
         SprintActionRef.action.performed += OnSprint;
         SprintActionRef.action.canceled += OnStopSprint;
         InteractActionRef.action.performed += OnInteract;
+        MenuActionRef.action.performed += OnPause;
     }
 
     private void OnDisable()
@@ -71,6 +75,7 @@ public class PlayerControls : MonoBehaviour
         SprintActionRef.action.performed -= OnSprint;
         SprintActionRef.action.canceled -= OnStopSprint;
         InteractActionRef.action.performed -= OnInteract;
+        MenuActionRef.action.performed -= OnPause;
 
         MoveActionRef.action.Disable();
         NextCameraActionRef.action.Disable();
@@ -79,6 +84,7 @@ public class PlayerControls : MonoBehaviour
         JumpActionRef.action.Disable();
         SprintActionRef.action.Disable();
         InteractActionRef.action.Disable();
+        MenuActionRef.action.Disable();
     }
 
 
@@ -118,6 +124,18 @@ public class PlayerControls : MonoBehaviour
         Vector3 move =
             camRight * input.x +
             camForward * input.y;
+
+        if (move.sqrMagnitude > 0.001f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(move);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                rotationSpeed * Time.deltaTime
+            );
+        }
+
+
 
         float currentSpeed = speed * speedMultiplier;
 
@@ -216,13 +234,20 @@ public class PlayerControls : MonoBehaviour
 
     public bool IsMoving()
     {
-        if (GameManager.Instance.IsCopying())
-            return false;
-
         if (Cameras == null || Cameras.Count == 0)
             return false;
 
         Vector2 input = MoveActionRef.action.ReadValue<Vector2>();
         return input.sqrMagnitude > 0.01f;
+    }
+
+    private void OnPause(InputAction.CallbackContext ctx)
+    {
+        bool isPaused = UIManager.Instance.endGameUI.activeSelf;
+
+        if (isPaused)
+            gm.ResumeGame();
+        else
+            gm.PauseGame();
     }
 }

@@ -5,26 +5,29 @@ using UnityEngine.AI;
 public class ProfessorAI : MonoBehaviour
 {
     [Header("References")]
-    public NavMeshAgent agent;
+    [SerializeField] private NavMeshAgent agent;
     public GameObject player;
 
     [Header("Vision")]
-    public float viewDistance = 10f;
-    public float viewAngle = 120f;
+    [SerializeField] private float viewDistance = 10f;
+    [SerializeField] private float viewAngle = 120f;
 
     [Header("Patrol")]
     public Vector3[] patrolPoints;
     private int currentIndex = 0;
 
     [Header("Suspicion")]
-    public float maxSuspicion = 100f;
-    public float suspicionIncreaseRate = 40f;
-    public float suspicionDecreaseRate = 20f;
-    public float rotationSpeed = 5f;
-    public float stopDuration = 0.5f;
+    [SerializeField] private float maxSuspicion = 100f;
+    [SerializeField] private float suspicionIncreaseRate = 40f;
+    [SerializeField] private float suspicionDecreaseRate = 20f;
+    [SerializeField] private float rotationSpeed = 5f;
+    [SerializeField] private float stopDuration = 0.5f;
+
+    [SerializeField] private AudioClip catchSoundClip;
 
     private float suspicion = 0f;
     private float stopTimer = 0f;
+
 
     void Awake()
     {
@@ -101,6 +104,7 @@ public class ProfessorAI : MonoBehaviour
 
         if (suspicion >= maxSuspicion)
         {
+            SoundFXManager.Instance.PlaySound(catchSoundClip, this.transform);
             GameManager.Instance.PlayerSpotted();
         }
         UIManager.Instance.updateSuspicionProgressUI(suspicion / maxSuspicion);

@@ -11,9 +11,8 @@ using UnityEngine.UI;
 public class SliderVolume : MonoBehaviour
 {
     [Header("Références du SliderVolume")]
-    [SerializeField]
     [Tooltip("Slider pour ajuster le volume")]
-    private Slider volumeSlider; // Le slider utilisé pour ajuster le volume
+    [SerializeField] private Slider volumeSlider; // Le slider utilisé pour ajuster le volume
 
     void Start()
     {
@@ -32,5 +31,6 @@ public class SliderVolume : MonoBehaviour
     public void ChangeVolume(float volume)
     {
         PlayerPrefs.SetFloat("Volume", volume); // Met à jour le niveau sonore global
+        SoundFXManager.Instance.updatePlayingSoundVolume(); // Met à jour le volume des sons en cours de lecture
     }
 }

@@ -1,11 +1,9 @@
+using System.Collections;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
-
-    public enum Difficulty { Easy, Medium, Hard }
-
     public enum GameState
     {
         Playing,
@@ -16,7 +14,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Enums")]
     public GameState CurrentState { get; private set; } = GameState.Playing;
-    public Difficulty difficulty = Difficulty.Easy;
 
     [Header("Copy Settings")]
     public float copyDuration = 5f;
@@ -31,6 +28,11 @@ public class GameManager : MonoBehaviour
     public int nbCopyNeeded = 5;
     public CopyTargetDesk currentdesk;
 
+    public AudioClip mainMusicClip;
+    public AudioClip loopMusicClip;
+    public AudioClip victorySoundClip;
+    public AudioClip loseSoundClip;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -39,6 +41,35 @@ public class GameManager : MonoBehaviour
             return;
         }
         Instance = this;
+    }
+    private void Start()
+    {
+        ShowRules();
+        UIManager.Instance.ShowInGameScreen();
+        SoundFXManager.Instance.PlaySound(mainMusicClip, this.transform);
+        StartCoroutine(PlayNextMusicAfter(mainMusicClip.length));
+    }
+
+    private void ShowRules()
+    {
+        Time.timeScale = 0f;
+        StartCoroutine(CoroutineRules());
+        Time.timeScale = 1f;
+    }
+
+    private IEnumerator CoroutineRules()
+    {
+        UIManager.Instance.beforeGameUI.SetActive(true);
+        yield return new WaitForSeconds(10f);
+        UIManager.Instance.beforeGameUI.SetActive(false);
+    }
+
+    private IEnumerator PlayNextMusicAfter(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        // Play the looping music clip
+        SoundFXManager.Instance.PlaySound(loopMusicClip, this.transform, true);
     }
 
     void Update()
@@ -70,7 +101,8 @@ public class GameManager : MonoBehaviour
     {
         CopyProgress = Mathf.Clamp01(CopyProgress + (1.0f / nbCopyNeeded));
         CurrentState = GameState.Playing;
-        UIManager.Instance.updateCopyProgressUI(CopyProgress);
+        UIManager.Instance.updateCurrentCopyProgressUI(0f);
+        
         Debug.Log("Copy completed");
     }
 
@@ -82,6 +114,7 @@ public class GameManager : MonoBehaviour
         CurrentState = GameState.Spotted_GameOver;
         Time.timeScale = 0f;
         UIManager.Instance.ShowEndScreen("Game Over: Player Spotted");
+        SoundFXManager.Instance.PlaySound(loseSoundClip, this.transform);
         Debug.Log("Game Over: Player spotted");
     }
 
@@ -92,9 +125,22 @@ public class GameManager : MonoBehaviour
             CurrentState = GameState.Win;
             Time.timeScale = 0f;
             UIManager.Instance.ShowEndScreen("You Win!");
+            SoundFXManager.Instance.PlaySound(victorySoundClip, this.transform);
             Debug.Log("You win!");
         }
     }
 
     public bool IsCopying() => CurrentState == GameState.Copying;
+
+    public void PauseGame()
+    {
+        Time.timeScale = 0f;
+        UIManager.Instance.ShowMenuScreen();
+    }
+
+    public void ResumeGame()
+    {
+        Time.timeScale = 1f;
+        UIManager.Instance.HideMenuScreen();
+    }
 }

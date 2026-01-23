@@ -34,6 +34,7 @@ public class CopyTargetDesk : MonoBehaviour
         {
             StopCoroutine(copyCoroutine);
             copyCoroutine = null;
+            UIManager.Instance.updateCurrentCopyProgressUI(0f);
             gm.StopCopying();
         }
     }

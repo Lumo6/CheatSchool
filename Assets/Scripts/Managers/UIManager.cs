@@ -21,8 +21,10 @@ public class UIManager : MonoBehaviour
     [Header("Copy UI")]
     [SerializeField] private TMPro.TMP_Text resultMessage;
 
-    [Header("EndGame UI")]
-    [SerializeField] private GameObject endGameUI;
+    [Header("Groups UI")]
+    public GameObject beforeGameUI;
+    public GameObject endGameUI;
+    public GameObject inGameUI;
 
     void Awake()
     {
@@ -54,10 +56,41 @@ public class UIManager : MonoBehaviour
         currentCopyBar.fillAmount = nb;
     }
 
+    public void ShowMenuScreen()
+    {
+        endGameUI.SetActive(true);
+    }
+
+    public void HideMenuScreen()
+    {
+        endGameUI.SetActive(false);
+    }
+
     public void ShowEndScreen(string message)
     {
         endGameUI.SetActive(true);
+        resultMessage.gameObject.SetActive(true);
         resultMessage.text = message;
+    }
+
+    public void ShowBeforeScreen()
+    {
+        beforeGameUI.SetActive(true);
+    }
+
+    public void HideBeforeScreen()
+    {
+        beforeGameUI.SetActive(false);
+    }
+
+    public void ShowInGameScreen()
+    {
+        inGameUI.SetActive(true);
+    }
+
+    public void HideInGameScreen()
+    {
+        inGameUI.SetActive(false);
     }
 
     public void ChangeScene(string sceneName)
