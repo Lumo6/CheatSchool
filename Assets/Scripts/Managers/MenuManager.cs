@@ -20,13 +20,22 @@ public class MenuManager : MonoBehaviour
     [Tooltip("Menu background music clip")]
     [SerializeField] private AudioClip menuMusicClip;
 
+    [SerializeField] private GlobalVariables globals;
 
-    public void PlayGame()
+
+
+
+    public void PlayGame(string difficultyname)
     {
+        SetDifficulty(difficultyname);
         SceneManager.LoadScene(PlayScene);
     }
 
-    // Back to main menu scene
+    public void SetDifficulty(string difficultyname)                                                            
+    {
+        globals.difficultyname = difficultyname;
+    }
+
     public void BackToMainMenu()
     {
         SceneManager.LoadScene("Menu");

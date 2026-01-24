@@ -7,38 +7,38 @@ using System.Collections;
 
 public class LevelGenerator : MonoBehaviour
 {
-    public Transform PropsParent;
+    [SerializeField] private Transform PropsParent;
 
     [Header("Prefabs")]
-    public GameObject floorPrefab;
-    public GameObject wallPrefab;
-    public GameObject wallDoorPrefab;
-    public GameObject pillarPrefab;
-    public GameObject pc_etuPrefab;
-    public GameObject pc_profPrefab;
-    public List<GameObject> windowWallPrefab;
-    public GameObject doorPrefab;
-    public GameObject patrolPointsPrefab;
+    [SerializeField] private GameObject floorPrefab;
+    [SerializeField] private GameObject wallPrefab;
+    [SerializeField] private GameObject wallDoorPrefab;
+    [SerializeField] private GameObject pillarPrefab;
+    [SerializeField] private GameObject pc_etuPrefab;
+    [SerializeField] private GameObject pc_profPrefab;
+    [SerializeField] private List<GameObject> windowWallPrefab;
+    [SerializeField] private GameObject doorPrefab;
+    [SerializeField] private GameObject patrolPointsPrefab;
 
 
     [Header("Room Size")]
-    public int rows = 5;
-    public int columns = 6;
+    [SerializeField] private int rows = 5;
+    [SerializeField] private int columns = 6;
 
     [Header("Student Desk Spacing")]
-    public float rowSpacing = 1.5f;
-    public float columnSpacing = 1.5f;
+    [SerializeField] private float rowSpacing = 1.5f;
+    [SerializeField] private float columnSpacing = 1.5f;
 
 
     [Header("Room Dimensions")]
-    public int length = 3;
-    public int width = 3;
+    [SerializeField] private int length = 3;
+    [SerializeField] private int width = 3;
 
     
 
     [Header("Player Desk")]
     private GameObject playerDesk;
-    public Vector3 playerDeskOffset = new Vector3(0, 0, 1f);
+    [SerializeField] private Vector3 playerDeskOffset = new Vector3(0, 0, 1f);
 
 
     [Header("Lengths")]
@@ -47,22 +47,22 @@ public class LevelGenerator : MonoBehaviour
 
     [Header("Cameras")]
     private List<Camera> Cameras;
-    public Camera cameraPrefab;
-    public float cameraOffset = 1f;
+    [SerializeField] private Camera cameraPrefab;
+    [SerializeField] private float cameraOffset = 1f;
 
     [Header("World Grid")]
     private Vector2Int gridPos; // (0..2, 0..2)
 
     [Header("Characters")]
-    public List<GameObject> rdmcharacters = new List<GameObject>();
-    public List<GameObject> copycharacters = new List<GameObject>();
-    public GameObject teacherCharacter;
-    public GameObject Player;
+    [SerializeField] private List<GameObject> rdmcharacters = new List<GameObject>();
+    [SerializeField] private List<GameObject> copycharacters = new List<GameObject>();
+    [SerializeField] private GameObject teacherCharacter;
+    [SerializeField] private GameObject Player;
 
     [Header("Random Obstacles")]
-    public List<GameObject> obstaclePrefabs = new List<GameObject>();
-    public int obstacleCount = 5;
-    public float obstacleWallOffset = 0.5f;
+    [SerializeField] private List<GameObject> obstaclePrefabs = new List<GameObject>();
+    [SerializeField] private int obstacleCount = 5;
+    [SerializeField] private float obstacleWallOffset = 0.5f;
 
 
     private List<GameObject> spawnedObjects = new List<GameObject>();
@@ -101,17 +101,26 @@ public class LevelGenerator : MonoBehaviour
 
         GenerateCameras();
         GeneratePlayer();
-
-        
     }
 
     private void Start()
     {
+        // Get lengths
         walllength = wallPrefab.GetComponent<MeshRenderer>().bounds.size;
         pillarlength = pillarPrefab.GetComponent<MeshRenderer>().bounds.size;
         segmentLength = walllength.z;
         pillarSize = pillarlength.z;
+
+        // Get GameManager instance
         gm = GameManager.Instance;
+
+        // Pull values from GameManager difficulty settings
+        DifficultySettings ds = gm.currentDifficultySettings;
+        width = ds.width;
+        length = ds.length;
+        rows = ds.rows;
+        columns = ds.columns;
+
         GenerateLevel();
     }
 

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -19,19 +20,29 @@ public class GameManager : MonoBehaviour
     public float copyDuration = 5f;
 
     [Header("Chrono")]
-    public float GameTime => gameTime;
-
-    private float gameTime = 0f;
+    public float gameTime = 0f;
+    public float gameTimeLimit = 300f;
 
     [SerializeField] private float CopyProgress = 0f;
     
     public int nbCopyNeeded = 5;
     public CopyTargetDesk currentdesk;
 
-    public AudioClip mainMusicClip;
-    public AudioClip loopMusicClip;
-    public AudioClip victorySoundClip;
-    public AudioClip loseSoundClip;
+    [SerializeField] private AudioClip mainMusicClip;
+    [SerializeField] private AudioClip victorySoundClip;
+    [SerializeField] private AudioClip loseSoundClip;
+
+    private AudioSource mainMusicAudioSource;
+
+    [Header("All Difficulty Settings")]
+    [SerializeField] private List<DifficultySettings> allDifficultySettings;
+
+
+    [Header("Current Difficulty Settings")]
+    public DifficultySettings currentDifficultySettings;
+
+    [Header("Global Variables")]
+    public GlobalVariables globals;
 
     void Awake()
     {
@@ -42,43 +53,64 @@ public class GameManager : MonoBehaviour
         }
         Instance = this;
     }
-    private void Start()
+    void Start()
     {
-        ShowRules();
-        UIManager.Instance.ShowInGameScreen();
-        SoundFXManager.Instance.PlaySound(mainMusicClip, this.transform);
-        StartCoroutine(PlayNextMusicAfter(mainMusicClip.length));
-    }
+        currentDifficultySettings = GetDifficultyByName(globals.difficultyname);
 
-    private void ShowRules()
-    {
+        if (currentDifficultySettings == null)
+        {
+            Debug.LogError("DifficultySettings not found! Using default values.");
+        }
+        else
+        {
+            // Pull values from ScriptableObject
+            copyDuration = currentDifficultySettings.copyDuration;
+            gameTimeLimit = currentDifficultySettings.gameTimeLimit;
+            nbCopyNeeded = currentDifficultySettings.nbCopyNeeded;
+        }
+
+        gameTime = 0f;
         Time.timeScale = 0f;
-        StartCoroutine(CoroutineRules());
-        Time.timeScale = 1f;
+        StartCoroutine(Begin());
     }
 
-    private IEnumerator CoroutineRules()
+
+
+    private IEnumerator Begin()
     {
         UIManager.Instance.beforeGameUI.SetActive(true);
-        yield return new WaitForSeconds(10f);
+        mainMusicAudioSource = SoundFXManager.Instance.PlaySound(mainMusicClip, this.transform, true);
+
+        yield return new WaitForSecondsRealtime(10f);
+
         UIManager.Instance.beforeGameUI.SetActive(false);
+        Time.timeScale = 1f;
+        UIManager.Instance.ShowInGameScreen();
     }
-
-    private IEnumerator PlayNextMusicAfter(float delay)
+    private DifficultySettings GetDifficultyByName(string name)
     {
-        yield return new WaitForSeconds(delay);
-
-        // Play the looping music clip
-        SoundFXManager.Instance.PlaySound(loopMusicClip, this.transform, true);
+        foreach (var diff in allDifficultySettings)
+        {
+            if (diff.difficultyname == name)
+                return diff;
+        }
+        Debug.LogWarning("DifficultySettings not found for name: " + name);
+        return null;
     }
-
     void Update()
     {
         if (CurrentState == GameState.Spotted_GameOver ||
             CurrentState == GameState.Win)
             return;
 
+        if (gameTime >= gameTimeLimit)
+        {
+            PlayerSpotted();
+            return;
+        }
+
         gameTime += Time.deltaTime;
+        UIManager.Instance.UpdateTime(Mathf.FloorToInt(gameTime).ToString());
     }
 
     public void StartCopying()
@@ -112,6 +144,7 @@ public class GameManager : MonoBehaviour
             return;
 
         CurrentState = GameState.Spotted_GameOver;
+        mainMusicAudioSource.Stop();
         Time.timeScale = 0f;
         UIManager.Instance.ShowEndScreen("Game Over: Player Spotted");
         SoundFXManager.Instance.PlaySound(loseSoundClip, this.transform);
@@ -123,6 +156,8 @@ public class GameManager : MonoBehaviour
         if (CopyProgress == 1.0f)
         {
             CurrentState = GameState.Win;
+            globals.scoreHisto.Add(new ScoreHistory(Mathf.FloorToInt(gameTime).ToString(),currentDifficultySettings.difficultyname));
+            mainMusicAudioSource.Stop();
             Time.timeScale = 0f;
             UIManager.Instance.ShowEndScreen("You Win!");
             SoundFXManager.Instance.PlaySound(victorySoundClip, this.transform);

@@ -67,9 +67,6 @@ public class CopyTargetDesk : MonoBehaviour
         if (!other.CompareTag("Player")) 
             return;
 
-        if(ui.interactUI == null)
-            return;
-
         ui.ShowInteractUI(true);
         gm.currentdesk = this;
     }
@@ -77,9 +74,6 @@ public class CopyTargetDesk : MonoBehaviour
     private void OnTriggerExit(Collider other)
     {
         if (!other.CompareTag("Player")) 
-            return;
-
-        if (ui.interactUI == null)
             return;
 
         ui.ShowInteractUI(false);

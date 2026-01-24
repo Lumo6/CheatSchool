@@ -18,8 +18,8 @@ public class ProfessorAI : MonoBehaviour
 
     [Header("Suspicion")]
     [SerializeField] private float maxSuspicion = 100f;
-    [SerializeField] private float suspicionIncreaseRate = 40f;
-    [SerializeField] private float suspicionDecreaseRate = 20f;
+    [SerializeField] private float suspicionIncreaseRate = 20f;
+    [SerializeField] private float suspicionDecreaseRate = 10f;
     [SerializeField] private float rotationSpeed = 5f;
     [SerializeField] private float stopDuration = 0.5f;
 
@@ -32,6 +32,12 @@ public class ProfessorAI : MonoBehaviour
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
+        DifficultySettings ds = GameManager.Instance.currentDifficultySettings;
+        suspicionIncreaseRate = ds.suspicionIncreaseRate;
+        suspicionDecreaseRate = ds.suspicionDecreaseRate;
+        stopDuration = ds.stopDuration;
+        viewAngle = ds.viewAngle;
+        viewDistance = ds.viewDistance;
     }
 
     void Update()

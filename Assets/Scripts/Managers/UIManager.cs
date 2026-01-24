@@ -6,19 +6,19 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance;
 
-    public GameObject interactUI;
+    [Header("General UI")]
+    [SerializeField] private GameObject interactUI;
     [SerializeField] private Canvas mainCanvas;
+    [SerializeField] private TMPro.TMP_Text TimeUI;
 
     [Header("Suspicion UI")]
     [SerializeField] private Image suspicionBar;
 
     [Header("Copy UI")]
     [SerializeField] private Image copyBar;
-
-    [Header("Copy UI")]
     [SerializeField] private Image currentCopyBar;
 
-    [Header("Copy UI")]
+    [Header("Result Message")]
     [SerializeField] private TMPro.TMP_Text resultMessage;
 
     [Header("Groups UI")]
@@ -96,5 +96,10 @@ public class UIManager : MonoBehaviour
     public void ChangeScene(string sceneName)
     {
         SceneManager.LoadScene(sceneName);
+    }
+
+    public void UpdateTime(string timeString)
+    {
+        TimeUI.text = timeString;
     }
 }
