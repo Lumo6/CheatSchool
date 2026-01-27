@@ -12,15 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1e3727d3d33b56458d6a2d9d9111520, type: 3}
   m_Name: Medium
   m_EditorClassIdentifier: Assembly-CSharp::DifficultySettings
+  difficultyname: Medium
   copyDuration: 6
-  gameTimeLimit: 360
+  gameTimeLimit: 240
   nbCopyNeeded: 10
   viewDistance: 20
   viewAngle: 120
   suspicionIncreaseRate: 30
   suspicionDecreaseRate: 10
   stopDuration: 1
-  rows: 5
-  columns: 6
+  rows: 4
+  columns: 5
   length: 3
   width: 3
+  obstacleCount: 5

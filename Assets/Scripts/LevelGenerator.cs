@@ -81,6 +81,17 @@ public class LevelGenerator : MonoBehaviour
         // Clear previous level
         ClearLevel();
 
+        // Get GameManager instance
+        gm = GameManager.Instance;
+
+        // Pull values from GameManager difficulty settings
+        DifficultySettings ds = gm.currentDifficultySettings;
+        width = ds.width;
+        length = ds.length;
+        rows = ds.rows;
+        columns = ds.columns;
+        obstacleCount = ds.obstacleCount;
+
         PickGridPosition();
 
         GenerateFloor();
@@ -110,16 +121,6 @@ public class LevelGenerator : MonoBehaviour
         pillarlength = pillarPrefab.GetComponent<MeshRenderer>().bounds.size;
         segmentLength = walllength.z;
         pillarSize = pillarlength.z;
-
-        // Get GameManager instance
-        gm = GameManager.Instance;
-
-        // Pull values from GameManager difficulty settings
-        DifficultySettings ds = gm.currentDifficultySettings;
-        width = ds.width;
-        length = ds.length;
-        rows = ds.rows;
-        columns = ds.columns;
 
         GenerateLevel();
     }

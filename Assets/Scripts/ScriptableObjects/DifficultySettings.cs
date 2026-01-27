@@ -31,4 +31,7 @@ public class DifficultySettings : ScriptableObject
     [Header("Room Dimensions")]
     public int length = 3;
     public int width = 3;
+
+    [Header("Obstacles")]
+    public int obstacleCount = 5;
 }

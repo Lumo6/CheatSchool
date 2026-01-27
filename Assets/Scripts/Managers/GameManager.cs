@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+
 
 public class GameManager : MonoBehaviour
 {
@@ -52,11 +54,10 @@ public class GameManager : MonoBehaviour
             return;
         }
         Instance = this;
+        currentDifficultySettings = GetDifficultyByName(globals.difficultyname) ? GetDifficultyByName(globals.difficultyname) : allDifficultySettings[0];
     }
     void Start()
     {
-        currentDifficultySettings = GetDifficultyByName(globals.difficultyname);
-
         if (currentDifficultySettings == null)
         {
             Debug.LogError("DifficultySettings not found! Using default values.");
@@ -91,8 +92,10 @@ public class GameManager : MonoBehaviour
     {
         foreach (var diff in allDifficultySettings)
         {
+            Debug.Log("Checking difficulty: " + diff.difficultyname);
             if (diff.difficultyname == name)
                 return diff;
+
         }
         Debug.LogWarning("DifficultySettings not found for name: " + name);
         return null;
@@ -156,14 +159,34 @@ public class GameManager : MonoBehaviour
         if (CopyProgress == 1.0f)
         {
             CurrentState = GameState.Win;
-            globals.scoreHisto.Add(new ScoreHistory(Mathf.FloorToInt(gameTime).ToString(),currentDifficultySettings.difficultyname));
+
+            int finalScore = Mathf.FloorToInt(gameTime);
+            globals.scoreHisto.Add(
+                new ScoreHistory(finalScore, currentDifficultySettings.difficultyname)
+            );
+
+            SaveScoreToFile(finalScore, currentDifficultySettings.difficultyname);
+
             mainMusicAudioSource.Stop();
             Time.timeScale = 0f;
+
             UIManager.Instance.ShowEndScreen("You Win!");
             SoundFXManager.Instance.PlaySound(victorySoundClip, this.transform);
             Debug.Log("You win!");
         }
     }
+
+
+    private void SaveScoreToFile(int score, string difficulty)
+    {
+        string filePath = Path.Combine(Application.persistentDataPath, "scores.txt");
+        string line = $"{score};{difficulty}";
+
+        File.AppendAllText(filePath, line + "\n");
+    }
+
+
+
 
     public bool IsCopying() => CurrentState == GameState.Copying;
 

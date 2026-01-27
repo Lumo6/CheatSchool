@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1e3727d3d33b56458d6a2d9d9111520, type: 3}
   m_Name: Easy
   m_EditorClassIdentifier: Assembly-CSharp::DifficultySettings
+  difficultyname: Easy
   copyDuration: 5
   gameTimeLimit: 300
   nbCopyNeeded: 5
@@ -20,7 +21,7 @@ MonoBehaviour:
   suspicionIncreaseRate: 20
   suspicionDecreaseRate: 10
   stopDuration: 0.5
-  rows: 5
-  columns: 6
+  rows: 4
+  columns: 5
   length: 3
   width: 3

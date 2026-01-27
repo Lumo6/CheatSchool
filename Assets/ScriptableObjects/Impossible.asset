@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1e3727d3d33b56458d6a2d9d9111520, type: 3}
   m_Name: Impossible
   m_EditorClassIdentifier: Assembly-CSharp::DifficultySettings
+  difficultyname: Impossible
   copyDuration: 10
   gameTimeLimit: 600
   nbCopyNeeded: 25
@@ -20,7 +21,8 @@ MonoBehaviour:
   suspicionIncreaseRate: 60
   suspicionDecreaseRate: 1
   stopDuration: 2
-  rows: 10
-  columns: 12
-  length: 6
-  width: 6
+  rows: 12
+  columns: 15
+  length: 7
+  width: 7
+  obstacleCount: 40

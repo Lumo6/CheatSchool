@@ -33,6 +33,7 @@ public class MenuManager : MonoBehaviour
 
     public void SetDifficulty(string difficultyname)                                                            
     {
+        Debug.Log("Difficulté sélectionnée : " + difficultyname);
         globals.difficultyname = difficultyname;
     }
 

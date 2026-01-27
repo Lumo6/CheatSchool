@@ -4,10 +4,10 @@ using UnityEngine;
 [System.Serializable]
 public class ScoreHistory
 {
-    public string scores;
+    public int scores;
     public string difficultyname;
 
-    public ScoreHistory(string scores, string difficultyname)
+    public ScoreHistory(int scores, string difficultyname)
     {
         this.scores = scores;
         this.difficultyname = difficultyname;

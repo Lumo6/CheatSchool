@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1e3727d3d33b56458d6a2d9d9111520, type: 3}
   m_Name: Hard
   m_EditorClassIdentifier: Assembly-CSharp::DifficultySettings
+  difficultyname: Hard
   copyDuration: 8
   gameTimeLimit: 420
   nbCopyNeeded: 15
@@ -20,7 +21,8 @@ MonoBehaviour:
   suspicionIncreaseRate: 40
   suspicionDecreaseRate: 5
   stopDuration: 1
-  rows: 6
-  columns: 8
-  length: 4
-  width: 4
+  rows: 8
+  columns: 10
+  length: 5
+  width: 5
+  obstacleCount: 20
