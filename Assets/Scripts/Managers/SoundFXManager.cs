@@ -5,13 +5,17 @@ public class SoundFXManager : MonoBehaviour
 {
     [Header("Singleton Instance")]
     [Tooltip("Singleton instance of the SoundFXManager")]
-    public static SoundFXManager Instance;
+    public static SoundFXManager Instance; // Singleton instance
 
     [Header("Sound FX Settings")]
     [Tooltip("AudioSource prefab for playing sound effects")]
-    [SerializeField] private AudioSource soundFXObject;
+    [SerializeField] private AudioSource soundFXObject;// AudioSource prefab for sound effects
 
-    private List<AudioSource> audioSources;
+    private List<AudioSource> audioSources;// List to keep track of active AudioSources
+
+    /// <summary>
+    /// Awake is called when the script instance is being loaded.
+    /// </summary>
     private void Awake()
     {
         // Ensure only one instance of SoundFXManager exists
@@ -23,6 +27,13 @@ public class SoundFXManager : MonoBehaviour
         audioSources = new List<AudioSource>();
     }
 
+    /// <summary>
+    /// Plays a sound effect at the specified transform position.
+    /// </summary>
+    /// <param name="audioClip"></param>// The audio clip to play
+    /// <param name="spawnTransform"></param>// The transform where the sound should be played
+    /// <param name="loop"></param>// Whether the sound should loop
+    /// <returns></returns>
     public AudioSource PlaySound(AudioClip audioClip, Transform spawnTransform, bool loop = false)
     {
         // Instantiate a new AudioSource at the specified position
@@ -54,6 +65,9 @@ public class SoundFXManager : MonoBehaviour
         return audioSource;
     }
 
+    /// <summary>
+    /// Updates the volume of all currently playing sounds based on player preferences.
+    /// </summary>
     public void updatePlayingSoundVolume()
     {
         foreach (AudioSource source in audioSources)

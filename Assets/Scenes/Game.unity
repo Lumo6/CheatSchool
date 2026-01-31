@@ -457,7 +457,6 @@ MonoBehaviour:
   - {fileID: 6238426434517519070, guid: 9b5b2dba3fee4c74e850eacf720317e2, type: 3}
   - {fileID: 6275129738118827182, guid: 5209c2a868f99174b800ce9625cb96d6, type: 3}
   obstacleCount: 5
-  obstacleWallOffset: 0.5
 --- !u!4 &398123287
 Transform:
   m_ObjectHideFlags: 0
@@ -1470,21 +1469,17 @@ MonoBehaviour:
   m_text: 'Rules :
 
 
-    Yellow Desks are the ones you need to copy.
+    You''ll need to copy a certain number of desk before goind
+    back to yours. The number depends on the difficulty selected (easy: 5, medium:
+    10, hard: 15, impossible: 25)
 
-    Get close
-    and press F to start copying.
+    Get close and press F to start copying.
 
-    Green Desk is your desk.
+    Use
+    ZQSD/WASD to move, shift to run (hold), space to jump and C to crouch (hold)
 
-    You''ll need
-    to get back to it after copying everyone needed.
-
-    Use ZQSD/WASD to move,
-    shift to run (hold), space to jump and C to crouch (hold)
-
-    Use A/Q and E
-    to switch between the cameras'
+    Use
+    A/Q and E to switch between the cameras'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

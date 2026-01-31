@@ -1,81 +1,84 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
-using Unity.VisualScripting;
-using UnityEngine.AI;
-using System.Collections;
+using UnityEngine.UIElements;
 
+/// <summary>
+/// Génère dynamiquement les niveaux de jeu, y compris le sol, les murs, les bureaux, les obstacles,
+/// les caméras de surveillance et les personnages (joueur et professeur).
+/// </summary>
 public class LevelGenerator : MonoBehaviour
 {
-    [SerializeField] private Transform PropsParent;
+    [Header("Parent of Props")]
+    [SerializeField] private Transform PropsParent; // Parent de tous les objets générés pour garder la hiérarchie propre
 
     [Header("Prefabs")]
     [SerializeField] private GameObject floorPrefab;
     [SerializeField] private GameObject wallPrefab;
     [SerializeField] private GameObject wallDoorPrefab;
     [SerializeField] private GameObject pillarPrefab;
-    [SerializeField] private GameObject pc_etuPrefab;
-    [SerializeField] private GameObject pc_profPrefab;
-    [SerializeField] private List<GameObject> windowWallPrefab;
+    [SerializeField] private GameObject pc_etuPrefab;  // Bureau étudiant
+    [SerializeField] private GameObject pc_profPrefab; // Bureau professeur
+    [SerializeField] private List<GameObject> windowWallPrefab; // Mur avec fenêtre
     [SerializeField] private GameObject doorPrefab;
-    [SerializeField] private GameObject patrolPointsPrefab;
-
+    [SerializeField] private GameObject patrolPointsPrefab; // Points de patrouille pour le professeur
 
     [Header("Room Size")]
-    [SerializeField] private int rows = 5;
-    [SerializeField] private int columns = 6;
+    [SerializeField] private int rows = 5;    // Nombre de rangées de bureaux étudiants
+    [SerializeField] private int columns = 6; // Nombre de colonnes de bureaux étudiants
 
     [Header("Student Desk Spacing")]
-    [SerializeField] private float rowSpacing = 1.5f;
-    [SerializeField] private float columnSpacing = 1.5f;
-
+    [SerializeField] private float rowSpacing = 1.5f;    // Espacement entre les rangées de bureaux
+    [SerializeField] private float columnSpacing = 1.5f; // Espacement entre les colonnes de bureaux
 
     [Header("Room Dimensions")]
-    [SerializeField] private int length = 3;
-    [SerializeField] private int width = 3;
-
-    
+    [SerializeField] private int length = 3; // Nombre de segments de longueur du mur
+    [SerializeField] private int width = 3;  // Nombre de segments de largeur du mur
 
     [Header("Player Desk")]
-    private GameObject playerDesk;
-    [SerializeField] private Vector3 playerDeskOffset = new Vector3(0, 0, 1f);
-
+    private GameObject playerDesk; // Référence au bureau du joueur
+    [SerializeField] private Vector3 playerDeskOffset = new Vector3(0, 0, 1f); // Décalage de position pour le joueur
 
     [Header("Lengths")]
-    private Vector3 walllength;
-    private Vector3 pillarlength;
+    private Vector3 walllength;   // Taille d'un segment de mur
+    private Vector3 pillarlength; // Taille d'un pilier
 
     [Header("Cameras")]
-    private List<Camera> Cameras;
+    private List<Camera> Cameras;           // Liste des caméras de surveillance
     [SerializeField] private Camera cameraPrefab;
-    [SerializeField] private float cameraOffset = 1f;
+    [SerializeField] private float cameraOffset = 1f; // Décalage de position des caméras
 
     [Header("World Grid")]
-    private Vector2Int gridPos; // (0..2, 0..2)
+    private Vector2Int gridPos; // Position de la salle dans la grille globale (0..2, 0..2)
 
     [Header("Characters")]
-    [SerializeField] private List<GameObject> rdmcharacters = new List<GameObject>();
-    [SerializeField] private List<GameObject> copycharacters = new List<GameObject>();
-    [SerializeField] private GameObject teacherCharacter;
-    [SerializeField] private GameObject Player;
+    [SerializeField] private List<GameObject> rdmcharacters = new List<GameObject>(); // Liste de PNJ étudiants
+    [SerializeField] private List<GameObject> copycharacters = new List<GameObject>(); // Non utilisé ici mais réservé pour futur
+    [SerializeField] private GameObject teacherCharacter; // Prefab du professeur
+    [SerializeField] private GameObject Player;           // Prefab du joueur
 
     [Header("Random Obstacles")]
     [SerializeField] private List<GameObject> obstaclePrefabs = new List<GameObject>();
-    [SerializeField] private int obstacleCount = 5;
-    [SerializeField] private float obstacleWallOffset = 0.5f;
+    [SerializeField] private int obstacleCount = 5;          // Nombre d'obstacles à générer
 
-
+    // Liste de tous les objets générés pour pouvoir les nettoyer facilement
     private List<GameObject> spawnedObjects = new List<GameObject>();
-    enum WallSide { North, South, East, West }
-    private HashSet<WallSide> outsideWalls = new HashSet<WallSide>();
-    private WallSide doorWall;
-    private float segmentLength;
-    private float pillarSize;
-    private GameObject floor;
-    private NavMeshSurface navMeshSurface;
-    private List<GameObject> copyTargetPositions = new List<GameObject>();
-    private GameManager gm;
 
+    // Enumération des côtés de murs pour la logique de génération
+    enum WallSide { North, South, East, West }
+    private HashSet<WallSide> outsideWalls = new HashSet<WallSide>(); // Murs exposés à l'extérieur
+    private WallSide doorWall;  // Mur sur lequel sera la porte
+    private float segmentLength; // Longueur d'un segment de mur
+    private float pillarSize;    // Taille d'un pilier
+    private GameObject floor;    // Référence au sol généré
+    private NavMeshSurface navMeshSurface; // Surface de navigation pour IA
+    private List<GameObject> copyTargetPositions = new List<GameObject>(); // Positions des bureaux à copier
+    private GameManager gm; // Référence au GameManager
+    private DifficultySettings ds; // Référence aux paramètres de difficulté actuels
+
+    /// <summary>
+    /// Génère le niveau complet : sol, murs, bureaux, obstacles, professeur, caméras et joueur.
+    /// </summary>
     void GenerateLevel()
     {
         // Clear previous level
@@ -85,7 +88,7 @@ public class LevelGenerator : MonoBehaviour
         gm = GameManager.Instance;
 
         // Pull values from GameManager difficulty settings
-        DifficultySettings ds = gm.currentDifficultySettings;
+        ds = gm.currentDifficultySettings;
         width = ds.width;
         length = ds.length;
         rows = ds.rows;
@@ -114,6 +117,9 @@ public class LevelGenerator : MonoBehaviour
         GeneratePlayer();
     }
 
+    /// <summary>
+    /// Initialisation au démarrage du jeu.
+    /// </summary>
     private void Start()
     {
         // Get lengths
@@ -125,7 +131,9 @@ public class LevelGenerator : MonoBehaviour
         GenerateLevel();
     }
 
-
+    /// <summary>
+    /// Nettoie tous les objets générés du niveau précédent.
+    /// </summary>
     void ClearLevel()
     {
         foreach (GameObject obj in spawnedObjects)
@@ -136,6 +144,9 @@ public class LevelGenerator : MonoBehaviour
         spawnedObjects.Clear();
     }
 
+    /// <summary>
+    /// Sélectionne une position aléatoire dans la grille 3x3 pour la salle actuelle.
+    /// </summary>
     void PickGridPosition()
     {
         gridPos = new Vector2Int(
@@ -146,7 +157,9 @@ public class LevelGenerator : MonoBehaviour
         Debug.Log($"Room grid position: {gridPos}");
     }
 
-
+    /// <summary>
+    /// Génère le sol et le plafond de la salle.
+    /// </summary>
     void GenerateFloor()
     {
         int scale = Mathf.Max(width, length);
@@ -178,6 +191,9 @@ public class LevelGenerator : MonoBehaviour
         navmodif.ignoreFromBuild = true;
     }
 
+    /// <summary>
+    /// Génère les murs de la salle avec des piliers, des fenêtres et une porte.
+    /// </summary>
     void GenerateWallsWithPillars()
     {
         // Compute which walls are outside + where the door goes
@@ -408,7 +424,9 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-
+    /// <summary>
+    /// Calcule quels murs sont exposés à l'extérieur et où placer la porte.
+    /// </summary>
     void ComputeWallLogic()
     {
         outsideWalls.Clear();
@@ -432,7 +450,9 @@ public class LevelGenerator : MonoBehaviour
         doorWall = insideWalls[Random.Range(0, insideWalls.Count)];
     }
 
-
+    /// <summary>
+    /// Place le bureau du professeur dans la salle.
+    /// </summary>
     private void PlaceTeacherDesk()
     {
 
@@ -451,7 +471,9 @@ public class LevelGenerator : MonoBehaviour
         spawnedObjects.Add(teacherDesk);
     }
 
-
+    /// <summary>
+    /// Génère les bureaux des étudiants dans la salle.
+    /// </summary>
     private void GenerateStudentDesks()
     {
         Renderer[] renderers = pc_etuPrefab.GetComponentsInChildren<Renderer>();
@@ -536,8 +558,9 @@ public class LevelGenerator : MonoBehaviour
         AssignCopyTargets(allDesks);
     }
 
-
-
+    /// <summary>
+    /// Assigne aléatoirement des bureaux comme cibles de copie.
+    /// </summary>
     void AssignCopyTargets(List<GameObject> desks)
     {
 
@@ -588,6 +611,9 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Applique un effet de lueur sur un bureau donné pour rendre le jeu plus facile en mode editor.
+    /// </summary>
     void MakeDeskGlow(GameObject desk,Color c)
     {
         Renderer[] renderers = desk.GetComponentsInChildren<Renderer>();
@@ -602,6 +628,9 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Génère des obstacles aléatoires dans la salle en évitant les murs avec portes et fenêtres.
+    /// </summary>
     void GenerateRandomObstacles()
     {
         if (obstaclePrefabs.Count == 0 || obstacleCount <= 0)
@@ -639,6 +668,8 @@ public class LevelGenerator : MonoBehaviour
 
                 WallSide wall = validWalls[Random.Range(0, validWalls.Count)];
                 GameObject prefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Count)];
+
+                float obstacleWallOffset = prefab.GetComponent<BoxCollider>().size.z / 2 + 0.1f;
 
                 Vector3 pos = Vector3.zero;
                 Quaternion rot = Quaternion.identity;
@@ -693,13 +724,17 @@ public class LevelGenerator : MonoBehaviour
 
 
     }
+
+    /// <summary>
+    /// Vérifie si une position est libre pour placer un obstacle.
+    /// </summary>
     bool IsPositionFree(Vector3 position, GameObject prefab)
     {
-        Collider col = prefab.GetComponentInChildren<Collider>();
+        BoxCollider col = prefab.GetComponentInChildren<BoxCollider>();
         if (col == null)
-            return true; // pas de collider donc on accepte
+            return true; // pas de box collider donc on accepte
 
-        Vector3 size = col.bounds.size;
+        Vector3 size = col.size;
         Vector3 halfExtents = size * 0.5f;
 
         // Décalage léger en hauteur pour éviter le sol
@@ -725,34 +760,56 @@ public class LevelGenerator : MonoBehaviour
         return true;
     }
 
-    Vector3[] GenerateTeacherPatrolPoints()
+    /// <summary>
+    /// Génère les points de patrouille pour le professeur.
+    /// </summary>
+    Vector3[] GenerateTeacherPatrolPoints(int randomPointsCount = 3)
     {
-        float walloffset = 1.0f;
+        float wallOffset = 1.0f;
         float segmentLength = walllength.z;
         float pillarSize = pillarlength.z;
 
         float roomWidth = width * (segmentLength + pillarSize);
         float roomLength = length * (segmentLength + pillarSize);
 
-        Vector3[] positions =
-        {
-            new Vector3(walloffset, 0, walloffset),
-            new Vector3(walloffset, 0, roomLength - walloffset),
-            new Vector3(roomWidth - walloffset, 0, roomLength - walloffset),
-            new Vector3(roomWidth - walloffset, 0, walloffset)
-        };
+        List<Vector3> positions = new List<Vector3>();
 
-        foreach (Vector3 position in positions)
+        //Les coins
+        positions.Add(new Vector3(wallOffset, 0, wallOffset));
+        positions.Add(new Vector3(wallOffset, 0, roomLength - wallOffset));
+        positions.Add(new Vector3(roomWidth - wallOffset, 0, roomLength - wallOffset));
+        positions.Add(new Vector3(roomWidth - wallOffset, 0, wallOffset));
+
+        //Le centre de la salle
+        Vector3 center = new Vector3(roomWidth / 2, 0, roomLength / 2);
+        positions.Add(center);
+
+        //Centre de chaque mur
+        positions.Add(new Vector3(roomWidth / 2, 0, wallOffset));              // mur bas
+        positions.Add(new Vector3(roomWidth / 2, 0, roomLength - wallOffset)); // mur haut
+        positions.Add(new Vector3(wallOffset, 0, roomLength / 2));             // mur gauche
+        positions.Add(new Vector3(roomWidth - wallOffset, 0, roomLength / 2)); // mur droit
+
+        //Points aléatoires vers les bureaux
+        for (int i = 0; i < randomPointsCount; i++)
         {
-            Instantiate(
-                patrolPointsPrefab,
-                position,
-                Quaternion.identity
-            );
+            float x = Random.Range(roomWidth * 0.25f, roomWidth * 0.75f);
+            float z = Random.Range(roomLength * 0.25f, roomLength * 0.75f);
+            positions.Add(new Vector3(x, 0, z));
         }
 
-        return positions;
+        // Instantiation des points
+        foreach (Vector3 position in positions)
+        {
+            Instantiate(patrolPointsPrefab, position, Quaternion.identity);
+        }
+
+        return positions.ToArray();
     }
+
+    /// <summary>
+    /// Génère le personnage du professeur et lui assigne ses points de patrouille.
+    /// </summary>
     void GenerateTeacher()
     {
 
@@ -769,10 +826,12 @@ public class LevelGenerator : MonoBehaviour
         teacherCharacter.transform.localScale = 2.0f * Vector3.one;
 
         ProfessorAI ai = teacherCharacter.GetComponent<ProfessorAI>();
-        ai.patrolPoints = GenerateTeacherPatrolPoints();
+        ai.patrolPoints = GenerateTeacherPatrolPoints(ds.nbCopyNeeded);
     }
 
-
+    /// <summary>
+    /// Génère les caméras de surveillance dans les coins de la salle.
+    /// </summary>
     void GenerateCameras()
     {
         if (Cameras == null)
@@ -813,6 +872,9 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Génère le personnage du joueur et l'assigne au bureau du joueur.
+    /// </summary>
     void GeneratePlayer()
     {
         Player = Instantiate(Player, playerDesk.transform.position + Vector3.one, Quaternion.identity);

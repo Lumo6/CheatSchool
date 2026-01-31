@@ -21,7 +21,7 @@ MonoBehaviour:
   suspicionIncreaseRate: 40
   suspicionDecreaseRate: 5
   stopDuration: 1
-  rows: 8
+  rows: 7
   columns: 10
   length: 5
   width: 5

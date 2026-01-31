@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Score history data structure
+/// </summary>
 [System.Serializable]
 public class ScoreHistory
 {
@@ -14,6 +17,9 @@ public class ScoreHistory
     }
 }
 
+/// <summary>
+/// Global variables ScriptableObject
+/// </summary>
 [CreateAssetMenu(fileName = "GlobalVariables", menuName = "Scriptable Objects/GlobalVariables")]
 public class GlobalVariables : ScriptableObject
 {
